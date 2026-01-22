@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { HomePage } from "./pages/HomePage";
 import { useTelegram } from "./hooks/useTelegram";
+import { ToastContainer } from "./components/Toast";
 import "./index.css";
 
 function App() {
-  const { webApp, colorScheme } = useTelegram();
+  const { colorScheme, themeParams, isReady } = useTelegram();
 
   useEffect(() => {
     // Set theme based on Telegram
@@ -17,20 +18,34 @@ function App() {
 
   useEffect(() => {
     // Apply Telegram theme colors
-    if (webApp.themeParams) {
+    if (themeParams) {
       const root = document.documentElement;
-      const params = webApp.themeParams;
 
-      if (params.bg_color) {
-        root.style.setProperty("--tg-bg-color", params.bg_color);
+      if (themeParams.bg_color) {
+        root.style.setProperty("--tg-bg-color", themeParams.bg_color);
       }
-      if (params.text_color) {
-        root.style.setProperty("--tg-text-color", params.text_color);
+      if (themeParams.text_color) {
+        root.style.setProperty("--tg-text-color", themeParams.text_color);
       }
     }
-  }, [webApp.themeParams]);
+  }, [themeParams]);
 
-  return <HomePage />;
+  if (!isReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-primary text-xl font-display">
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <HomePage />
+      <ToastContainer />
+    </>
+  );
 }
 
 export default App;

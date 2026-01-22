@@ -87,7 +87,8 @@ class ProductImage(models.Model):
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="images"
     )
-    image = models.ImageField(upload_to="products/")
+    image = models.ImageField(upload_to="products/", blank=True, null=True)
+    image_url = models.URLField(blank=True, null=True, help_text="Tashqi rasm URL")
     is_main = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
 

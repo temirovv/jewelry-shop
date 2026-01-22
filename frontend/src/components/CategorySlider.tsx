@@ -1,69 +1,136 @@
+import { memo, useRef } from "react";
 import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "../lib/utils";
 import type { Category } from "../types";
 
 interface CategorySliderProps {
   categories: Category[];
   selectedCategory?: string;
-  onSelect?: (category: Category) => void;
+  onSelect?: (slug: string | undefined) => void;
+  loading?: boolean;
 }
 
-export function CategorySlider({
+export const CategorySlider = memo(function CategorySlider({
   categories,
   selectedCategory,
   onSelect,
+  loading = false,
 }: CategorySliderProps) {
-  return (
-    <div className="w-full overflow-x-auto scrollbar-hide py-3">
-      <motion.div
-        className="flex gap-3 px-4"
-        initial={{ x: -20, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        {/* All */}
-        <CategoryItem
-          name="Barchasi"
-          isSelected={!selectedCategory}
-          onClick={() => onSelect?.(undefined as unknown as Category)}
-        />
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-        {categories.map((category) => (
-          <CategoryItem
-            key={category.id}
-            name={category.name}
-            icon={category.icon}
-            isSelected={selectedCategory === category.slug}
-            onClick={() => onSelect?.(category)}
+  const scroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const scrollAmount = 200;
+      scrollRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex gap-3 px-4 py-3 overflow-hidden">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div
+            key={i}
+            className="h-10 w-24 rounded-full bg-muted animate-pulse flex-shrink-0"
           />
         ))}
-      </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative group">
+      {/* Scroll Buttons */}
+      <button
+        onClick={() => scroll("left")}
+        className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center rounded-full bg-background/90 shadow-lg border opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <ChevronLeft className="w-4 h-4" />
+      </button>
+      <button
+        onClick={() => scroll("right")}
+        className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 items-center justify-center rounded-full bg-background/90 shadow-lg border opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        <ChevronRight className="w-4 h-4" />
+      </button>
+
+      {/* Categories */}
+      <div
+        ref={scrollRef}
+        className="flex gap-2.5 px-4 py-3 overflow-x-auto scrollbar-hide scroll-smooth"
+      >
+        {/* All */}
+        <CategoryChip
+          name="Barchasi"
+          emoji="✨"
+          isSelected={!selectedCategory}
+          onClick={() => onSelect?.(undefined)}
+          index={0}
+        />
+
+        {categories.map((category, index) => (
+          <CategoryChip
+            key={category.id}
+            name={category.name}
+            emoji={category.icon}
+            isSelected={selectedCategory === category.slug}
+            onClick={() => onSelect?.(category.slug)}
+            index={index + 1}
+          />
+        ))}
+      </div>
     </div>
   );
-}
+});
 
-interface CategoryItemProps {
+interface CategoryChipProps {
   name: string;
-  icon?: string;
+  emoji?: string;
   isSelected?: boolean;
   onClick?: () => void;
+  index: number;
 }
 
-function CategoryItem({ name, icon, isSelected, onClick }: CategoryItemProps) {
+const CategoryChip = memo(function CategoryChip({
+  name,
+  emoji,
+  isSelected,
+  onClick,
+  index,
+}: CategoryChipProps) {
   return (
     <motion.button
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{
+        duration: 0.3,
+        delay: index * 0.05,
+        ease: "easeOut",
+      }}
       whileTap={{ scale: 0.95 }}
       onClick={onClick}
       className={cn(
-        "flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all",
-        "border text-sm font-medium",
+        "relative flex items-center gap-2 px-4 py-2.5 rounded-full whitespace-nowrap transition-all duration-300 text-sm font-medium flex-shrink-0",
         isSelected
-          ? "gold-gradient text-white border-transparent shadow-md"
-          : "bg-background border-border hover:border-primary/50"
+          ? "gold-gradient text-white shadow-lg shadow-amber-500/25"
+          : "bg-muted/80 hover:bg-muted text-foreground"
       )}
     >
-      {icon && <span>{icon}</span>}
+      {emoji && <span className="text-base">{emoji}</span>}
       <span>{name}</span>
+
+      {/* Selection indicator */}
+      {isSelected && (
+        <motion.div
+          layoutId="categoryIndicator"
+          className="absolute inset-0 rounded-full gold-gradient -z-10"
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+        />
+      )}
     </motion.button>
   );
-}
+});

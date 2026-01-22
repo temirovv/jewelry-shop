@@ -1,9 +1,17 @@
-import axios, { AxiosError, AxiosInstance } from "axios";
-import WebApp from "@twa-dev/sdk";
+import axios from "axios";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
-const apiClient: AxiosInstance = axios.create({
+// Get Telegram WebApp safely
+const getTelegramWebApp = () => {
+  try {
+    return (window as any).Telegram?.WebApp;
+  } catch {
+    return null;
+  }
+};
+
+const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
@@ -14,8 +22,9 @@ const apiClient: AxiosInstance = axios.create({
 apiClient.interceptors.request.use(
   (config) => {
     // Telegram WebApp initData ni header ga qo'shish
-    if (WebApp.initData) {
-      config.headers["X-Telegram-Init-Data"] = WebApp.initData;
+    const webApp = getTelegramWebApp();
+    if (webApp?.initData) {
+      config.headers["X-Telegram-Init-Data"] = webApp.initData;
     }
     return config;
   },
@@ -25,7 +34,7 @@ apiClient.interceptors.request.use(
 // Response interceptor - xatoliklarni boshqarish
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  (error) => {
     if (error.response?.status === 401) {
       // Unauthorized - Telegram auth muammo
       console.error("Authentication error");

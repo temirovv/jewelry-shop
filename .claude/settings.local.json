@@ -5,7 +5,14 @@
       "Bash(npm install)",
       "Bash(npm install:*)",
       "Bash(npx tailwindcss:*)",
-      "Bash(node ./node_modules/tailwindcss/lib/cli.js:*)"
+      "Bash(node ./node_modules/tailwindcss/lib/cli.js:*)",
+      "Bash(./venv/Scripts/pip.exe install:*)",
+      "Bash(./venv/Scripts/python.exe manage.py:*)",
+      "Bash(curl:*)",
+      "Bash(npm run dev:*)",
+      "Bash(\"C:\\Users\\ASUS\\Documents\\MyPros\\jewelry-shop\\bot\\venv\\Scripts\\pip.exe\" install -r \"C:\\Users\\ASUS\\Documents\\MyPros\\jewelry-shop\\bot\\requirements.txt\")",
+      "Bash(./venv/Scripts/python.exe:*)",
+      "Bash(timeout /t)"
     ],
     "deny": [],
     "ask": []

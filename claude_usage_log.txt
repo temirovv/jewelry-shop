@@ -185,3 +185,246 @@ STATISTIKA
 - Ishlatilgan vaqt: ~30 daqiqa
 
 ================================================================================
+
+================================================================================
+SESSION #2 - Backend va Frontend ishga tushirish
+================================================================================
+
+[00:00] VAZIFA: Backend ishga tushirish
+STATUS: TUGALLANDI ✅
+
+Bajarilgan ishlar:
+1. ✅ Python virtual environment yaratish
+2. ✅ Dependencies o'rnatish (Django 5, DRF, psycopg2, etc.)
+3. ✅ SQLite database (development uchun)
+4. ✅ Migratsiyalar yaratish va ishga tushirish
+5. ✅ Superuser yaratish (admin / admin123)
+6. ✅ Test ma'lumotlar qo'shish (6 kategoriya, 12 mahsulot)
+7. ✅ Server ishga tushirish (http://127.0.0.1:8000)
+
+API Endpoints tekshirildi:
+- GET /api/categories/ ✅
+- GET /api/products/ ✅
+- GET /api/products/featured/ ✅
+
+--------------------------------------------------------------------------------
+[00:15] VAZIFA: Frontend Premium UI yaratish
+STATUS: TUGALLANDI ✅
+
+Yaratilgan komponentlar:
+
+UI Komponentlar:
+- Button - variant'lar (default, gold, ghost, outline)
+- Card - shadow va hover effektlar
+- Badge - gold, sale, secondary
+- Sheet - side panel (Cart uchun)
+- Input - rounded, focus ring
+- Skeleton - shimmer animatsiya
+
+Feature Komponentlar:
+- ProductCard - hover zoom, like button, quick add
+- CartSheet - quantity control, summary, checkout
+- QuickViewModal - image gallery, specs, add to cart
+- Header - sticky, blur backdrop, cart badge
+- BottomNav - active indicator animation
+- HeroBanner - auto-slide, gradient backgrounds
+- CategorySlider - horizontal scroll, selected state
+
+Animatsiyalar (Framer Motion):
+- Staggered list animations
+- Scale on tap
+- Slide transitions
+- Layout animations
+- Exit animations
+
+Ranglar va Stillar:
+- Gold gradient (#f7d774 → #d4a855 → #b8860b)
+- Blur backdrop
+- Rounded corners (0.75rem)
+- Custom scrollbar
+- Safe area support (iOS)
+
+--------------------------------------------------------------------------------
+JORIY HOLAT
+--------------------------------------------------------------------------------
+
+Backend: ✅ ISHLAYAPTI
+- URL: http://127.0.0.1:8000
+- Admin: http://127.0.0.1:8000/admin/
+- Login: admin / admin123
+
+Frontend: ✅ ISHLAYAPTI
+- URL: http://localhost:3000
+- API bilan ulangan
+- Real ma'lumotlar ko'rsatilmoqda
+
+================================================================================
+SESSION #3 - Bug Fixes (Browser Compatibility)
+================================================================================
+
+[00:30] VAZIFA: Oq ekran muammosini hal qilish
+STATUS: TUGALLANDI ✅
+
+MUAMMO: Browser da ochganda oq ekran ko'rinmoqda
+
+SABAB: @twa-dev/sdk kutubxonasi faqat Telegram WebApp ichida ishlaydi.
+       Oddiy brauzerda SDK ni chaqirganda xato beradi va ilova buziladi.
+
+YECHIM:
+1. ✅ src/hooks/useTelegram.ts - Telegram WebApp mavjudligini tekshirish
+   - isTelegramWebApp() funksiyasi qo'shildi
+   - Mock hapticFeedback yaratildi
+   - Brauzerdagi fallback qiymatlar qo'shildi
+
+2. ✅ src/App.tsx - null check va loading state
+   - webApp o'rniga themeParams ishlatildi
+   - isReady holatini kutish
+   - Loading spinner qo'shildi
+
+3. ✅ src/lib/api/client.ts - SDK import olib tashlandi
+   - @twa-dev/sdk import o'chirildi
+   - window.Telegram.WebApp dan xavfsiz foydalanish
+   - getTelegramWebApp() helper funksiya
+
+NATIJA: Ilova brauzerda ham, Telegram ichida ham ishlaydi
+
+================================================================================
+SESSION #4 - Django Admin Unfold Integration
+================================================================================
+
+[00:45] VAZIFA: Django admin uchun Unfold theme o'rnatish
+STATUS: TUGALLANDI ✅
+
+O'rnatilgan paket:
+- django-unfold v0.76.0
+
+Yangilangan fayllar:
+1. ✅ requirements.txt - django-unfold>=0.40.0 qo'shildi
+2. ✅ config/settings.py - UNFOLD konfiguratsiya
+   - Gold rang teması (amber/gold palette)
+   - Custom sidebar navigatsiya
+   - Tabs (Mahsulotlar, Buyurtmalar uchun)
+   - Environment callback (Development/Production)
+
+3. ✅ apps/products/admin.py
+   - Unfold ModelAdmin, TabularInline
+   - display decorators
+   - Chiroyli narx formati
+   - Rasm preview
+
+4. ✅ apps/users/admin.py
+   - Avatar display
+   - Til va status labels
+
+5. ✅ apps/orders/admin.py
+   - Buyurtma statuslari (label colors)
+   - Bulk actions (mark_confirmed, mark_shipped, etc.)
+   - OrderItemInline
+
+6. ✅ apps/cart/admin.py
+   - Cart va CartItem display
+
+7. ✅ utils.py fayllar yaratildi (sidebar badge uchun)
+   - apps/products/utils.py
+   - apps/orders/utils.py
+   - apps/users/utils.py
+
+8. ✅ static/admin/img/logo-light.svg, logo-dark.svg
+
+ADMIN PANEL: http://127.0.0.1:8000/admin/
+LOGIN: admin / admin123
+
+XUSUSIYATLAR:
+- Zamonaviy UI/UX
+- Gold rang sxemasi
+- Sidebar navigatsiya
+- Quick tabs
+- Responsive dizayn
+- Dark mode qo'llab-quvvatlash
+
+================================================================================
+SESSION #5 - Frontend UI/UX Bug Fixes
+================================================================================
+
+[01:30] VAZIFA: UI/UX komponentlarni tekshirish va tuzatish
+STATUS: TUGALLANDI ✅
+
+TOPILGAN MUAMMOLAR VA TUZATISHLAR:
+
+1. ✅ QuickViewModal - quantity state bug
+   - Muammo: Modal yopilganda quantity reset bo'lmaydi
+   - Yechim: useEffect qo'shildi (open/product.id dependency)
+
+2. ✅ CartStore - narx type mismatch
+   - Muammo: price string bo'lishi mumkin, NaN natija
+   - Yechim: getTotal() da Number() wrapper qo'shildi
+
+3. ✅ HomePage - Error handling
+   - Muammo: API xatosi bo'lganda foydalanuvchi bilmaydi
+   - Yechim: error state va xato UI qo'shildi
+   - "Qayta yuklash" button bilan
+
+4. ✅ CartSheet - Padding konflikt
+   - Muammo: p-0 va SheetHeader padding conflikt
+   - Yechim: !p-0 va px-5 pt-5 pb-0 ishlatildi
+
+5. ✅ Toast Notification System
+   - Yangi komponent: src/components/Toast.tsx
+   - Zustand store bilan
+   - 3 xil tip: success, error, info
+   - Auto-dismiss 3 sekunddan keyin
+   - Animatsiyalar (framer-motion)
+
+YANGILANGAN FAYLLAR:
+- src/components/QuickViewModal.tsx
+- src/stores/cartStore.ts
+- src/pages/HomePage.tsx
+- src/components/CartSheet.tsx
+- src/components/Toast.tsx (yangi)
+- src/App.tsx
+
+NATIJA: UI/UX kamchiliklar tuzatildi, Toast notification qo'shildi
+
+================================================================================
+SESSION #6 - Mahsulot Rasmlari Qo'shish
+================================================================================
+
+[02:00] VAZIFA: Mahsulotlarga test rasmlarini qo'shish
+STATUS: TUGALLANDI ✅
+
+MUAMMO: Barcha mahsulotlarda images: [] bo'sh edi
+
+YECHIM:
+1. ✅ ProductImage modeliga image_url field qo'shildi
+   - image = ImageField(blank=True, null=True)
+   - image_url = URLField(blank=True, null=True) - YANGI
+
+2. ✅ ProductImageSerializer yangilandi
+   - SerializerMethodField ishlatildi
+   - image yoki image_url qaytaradi
+
+3. ✅ Migration yaratildi va ishga tushirildi
+   - 0002_productimage_image_url_alter_productimage_image.py
+
+4. ✅ add_images management command yaratildi
+   - Unsplash dan zargarlik rasmlari URL lari
+   - Kategoriyalarga mos rasmlar
+
+5. ✅ 12 ta rasm qo'shildi
+
+RASMLAR MANBASI: Unsplash (royalty-free)
+- Uzuklar: engagement rings, wedding bands
+- Sirg'alar: gold earrings, pearl earrings
+- Marjonlar: necklaces, pendants
+- Bilaguzuklar: bracelets, bangles
+- To'plamlar: jewelry sets
+
+YANGILANGAN FAYLLAR:
+- backend/apps/products/models.py
+- backend/apps/products/serializers.py
+- backend/apps/products/migrations/0002_*.py
+- backend/apps/products/management/commands/add_images.py (yangi)
+
+NATIJA: Frontend endi haqiqiy zargarlik rasmlarini ko'rsatadi!
+
+================================================================================
