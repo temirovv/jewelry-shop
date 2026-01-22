@@ -1,0 +1,187 @@
+================================================================================
+                    CLAUDE CODE USAGE LOG - JEWELRY SHOP PROJECT
+================================================================================
+
+Sana: 2026-01-22
+Loyiha: Jewelry Marketplace WebApp (Premium UI)
+Texnologiyalar: React 18, Django 5, Aiogram 3, PostgreSQL, Telegram WebApp
+
+================================================================================
+SESSION #1 - Loyihani boshlash
+================================================================================
+
+[23:55] VAZIFA: Loyiha strukturasini yaratish
+STATUS: TUGALLANDI ✅
+
+Reja:
+1. ✅ Monorepo strukturasini yaratish (frontend, backend, bot)
+2. ✅ Frontend - React + Vite + TypeScript + Shadcn/UI
+3. ✅ Backend - Django + DRF
+4. ✅ Bot - Aiogram 3.x
+5. ✅ Docker Compose orqali birlashtirish
+6. ✅ GitHub dokumentatsiya (README.md)
+
+--------------------------------------------------------------------------------
+QADAM 1: Loyiha papkalarini yaratish ✅
+--------------------------------------------------------------------------------
+Yaratilgan papkalar:
+- /frontend - React SPA
+- /backend - Django API
+- /bot - Telegram bot
+- /docs - Dokumentatsiya
+
+--------------------------------------------------------------------------------
+QADAM 2: Frontend sozlash ✅
+--------------------------------------------------------------------------------
+Ishlatilgan buyruqlar:
+- npm create vite@latest . -- --template react-ts
+- npm install
+- npm install tailwindcss postcss autoprefixer
+- npm install framer-motion zustand axios lucide-react @twa-dev/sdk
+
+Yaratilgan fayllar:
+- tailwind.config.js - Tailwind konfiguratsiya (gold ranglar, custom fonts)
+- postcss.config.js - PostCSS konfiguratsiya
+- src/index.css - Global styles (Telegram WebApp, gold gradients, shimmer)
+- src/lib/utils.ts - Utility funksiyalar (cn, formatPrice)
+- src/types/index.ts - TypeScript type'lar
+- src/hooks/useTelegram.ts - Telegram WebApp hook
+- src/stores/cartStore.ts - Zustand cart store
+- src/lib/api/client.ts - Axios client (Telegram auth)
+- src/lib/api/products.ts - Products API
+- src/lib/api/orders.ts - Orders API
+- src/components/ui/button.tsx - Button komponenti
+- src/components/ui/card.tsx - Card komponenti
+- src/components/ui/badge.tsx - Badge komponenti
+- src/components/ui/skeleton.tsx - Skeleton loader
+- src/components/ProductCard.tsx - Mahsulot kartasi
+- src/components/Header.tsx - Header (logo, cart, search)
+- src/components/CategorySlider.tsx - Kategoriya slider
+- src/pages/HomePage.tsx - Bosh sahifa
+- src/App.tsx - Main app (Telegram theme)
+- vite.config.ts - Vite konfiguratsiya
+- .env.example - Environment namuna
+
+--------------------------------------------------------------------------------
+QADAM 3: Backend sozlash ✅
+--------------------------------------------------------------------------------
+Yaratilgan fayllar:
+- requirements.txt - Python dependencies
+- manage.py - Django CLI
+- config/settings.py - Django settings (DRF, CORS, Telegram)
+- config/urls.py - URL routing
+- config/wsgi.py - WSGI application
+
+Apps:
+1. apps/users/
+   - models.py - TelegramUser model
+   - authentication.py - Telegram initData auth
+   - serializers.py - User serializer
+   - views.py - User API views
+   - urls.py - User endpoints
+   - admin.py - Admin panel
+
+2. apps/products/
+   - models.py - Category, Product, ProductImage
+   - serializers.py - Product serializers
+   - views.py - Product ViewSet
+   - filters.py - Product filters
+   - urls.py - Product endpoints
+   - admin.py - Admin panel
+
+3. apps/orders/
+   - models.py - Order, OrderItem
+   - serializers.py - Order serializers
+   - views.py - Order ViewSet
+   - urls.py - Order endpoints
+   - admin.py - Admin panel
+
+4. apps/cart/
+   - models.py - Cart, CartItem
+   - serializers.py - Cart serializers
+   - views.py - Cart API views
+   - urls.py - Cart endpoints
+   - admin.py - Admin panel
+
+- .env.example - Environment namuna
+
+--------------------------------------------------------------------------------
+QADAM 4: Telegram Bot sozlash ✅
+--------------------------------------------------------------------------------
+Yaratilgan fayllar:
+- requirements.txt - Bot dependencies (aiogram 3.x)
+- config.py - Bot konfiguratsiya
+- main.py - Bot entry point
+- handlers/__init__.py - Router
+- handlers/start.py - /start, /help, /orders
+- handlers/callbacks.py - Callback handlers
+- keyboards/__init__.py - Keyboards export
+- keyboards/inline.py - WebApp, language keyboards
+- .env.example - Environment namuna
+
+--------------------------------------------------------------------------------
+QADAM 5: Docker Compose ✅
+--------------------------------------------------------------------------------
+Yaratilgan fayllar:
+- docker-compose.yml - Multi-service setup
+- backend/Dockerfile - Django production
+- frontend/Dockerfile - React build + Nginx
+- frontend/nginx.conf - SPA routing, API proxy
+- bot/Dockerfile - Python bot
+- .gitignore - Git ignore rules
+
+--------------------------------------------------------------------------------
+QADAM 6: Dokumentatsiya ✅
+--------------------------------------------------------------------------------
+Yaratilgan fayllar:
+- README.md - Asosiy dokumentatsiya
+- docs/API.md - API endpoints dokumentatsiyasi
+- docs/DEPLOYMENT.md - Production deployment guide
+- CLAUDE.md - Claude Code uchun loyiha konteksti
+
+================================================================================
+LOYIHA HOLATI: TAYYOR 🎉
+================================================================================
+
+Keyingi qadamlar (sizning vazifangiz):
+
+1. Environment fayllarni sozlang:
+   - backend/.env yarating (.env.example dan nusxa)
+   - frontend/.env yarating
+   - bot/.env yarating
+
+2. Database yarating:
+   cd backend
+   python -m venv venv
+   venv\Scripts\activate
+   pip install -r requirements.txt
+   python manage.py migrate
+   python manage.py createsuperuser
+
+3. Frontend ishga tushiring:
+   cd frontend
+   npm run dev
+
+4. Backend ishga tushiring:
+   cd backend
+   python manage.py runserver
+
+5. Bot ishga tushiring (token kerak):
+   cd bot
+   python main.py
+
+6. Telegram @BotFather orqali:
+   - Bot yarating
+   - WebApp URL sozlang
+   - Menu button qo'shing
+
+================================================================================
+STATISTIKA
+================================================================================
+- Yaratilgan fayllar: 50+
+- Frontend komponentlar: 10
+- Backend apps: 4
+- API endpoints: 15+
+- Ishlatilgan vaqt: ~30 daqiqa
+
+================================================================================
