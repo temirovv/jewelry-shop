@@ -2,6 +2,32 @@ from django.db import models
 from django.utils.text import slugify
 
 
+class Banner(models.Model):
+    """Bosh sahifa carousel bannerlari"""
+
+    title = models.CharField(max_length=100)
+    subtitle = models.CharField(max_length=200, blank=True)
+    emoji = models.CharField(max_length=10, default="💎", help_text="Banner emoji")
+    gradient = models.CharField(
+        max_length=200,
+        default="from-amber-500/20 via-amber-600/10 to-transparent",
+        help_text="Tailwind gradient classlari"
+    )
+    link = models.CharField(max_length=200, blank=True, help_text="Bosilganda o'tish linki")
+    image = models.ImageField(upload_to="banners/", blank=True, null=True)
+    order = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Banner"
+        verbose_name_plural = "Bannerlar"
+        ordering = ["order", "-created_at"]
+
+    def __str__(self):
+        return self.title
+
+
 class Category(models.Model):
     """Mahsulot kategoriyasi"""
 
@@ -73,11 +99,13 @@ class Product(models.Model):
     @property
     def main_image(self):
         main = self.images.filter(is_main=True).first()
+        if not main:
+            main = self.images.first()
         if main:
-            return main.image.url
-        first = self.images.first()
-        if first:
-            return first.image.url
+            if main.image:
+                return main.image.url
+            if main.image_url:
+                return main.image_url
         return None
 
 

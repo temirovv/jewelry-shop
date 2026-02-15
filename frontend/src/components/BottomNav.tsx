@@ -2,6 +2,7 @@ import { memo } from "react";
 import { motion } from "framer-motion";
 import { Home, Search, Heart, ShoppingBag, User } from "lucide-react";
 import { useCartStore } from "../stores/cartStore";
+import { useFavoritesStore } from "../stores/favoritesStore";
 
 type TabType = "home" | "search" | "favorites" | "cart" | "profile";
 
@@ -13,8 +14,8 @@ interface BottomNavProps {
 const tabs = [
   { id: "home" as TabType, icon: Home, label: "Bosh sahifa" },
   { id: "search" as TabType, icon: Search, label: "Qidirish" },
-  { id: "favorites" as TabType, icon: Heart, label: "Sevimli" },
-  { id: "cart" as TabType, icon: ShoppingBag, label: "Savat" },
+  { id: "favorites" as TabType, icon: Heart, label: "Sevimli", badge: "favorites" },
+  { id: "cart" as TabType, icon: ShoppingBag, label: "Savat", badge: "cart" },
   { id: "profile" as TabType, icon: User, label: "Profil" },
 ];
 
@@ -22,81 +23,75 @@ export const BottomNav = memo(function BottomNav({
   activeTab,
   onTabChange,
 }: BottomNavProps) {
-  const itemsCount = useCartStore((state) => state.getItemsCount());
+  const cartCount = useCartStore((state) => state.getItemsCount());
+  const favoritesCount = useFavoritesStore((state) => state.items.length);
+
+  const getBadgeCount = (badge?: string) => {
+    if (badge === "cart") return cartCount;
+    if (badge === "favorites") return favoritesCount;
+    return 0;
+  };
 
   return (
-    <motion.nav
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      transition={{ type: "spring", damping: 25, stiffness: 300 }}
-      className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border/50 safe-area-bottom"
-    >
+    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-xl border-t border-border/50 safe-area-bottom">
       <div className="flex items-center justify-around h-16 px-2">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           const Icon = tab.icon;
-          const showBadge = tab.id === "cart" && itemsCount > 0;
+          const badgeCount = getBadgeCount(tab.badge);
 
           return (
-            <motion.button
+            <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className="relative flex flex-col items-center justify-center w-16 h-14 rounded-2xl"
-              whileTap={{ scale: 0.9 }}
+              className="relative flex flex-col items-center justify-center w-16 h-14 rounded-2xl active:scale-95 transition-transform duration-150"
             >
-              {/* Active Background */}
+              {/* Active Background - silliq layoutId animatsiya */}
               {isActive && (
                 <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-1 rounded-2xl gold-gradient opacity-10"
-                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  layoutId="navActiveTab"
+                  className="absolute inset-1 rounded-2xl bg-primary/10"
+                  transition={{
+                    type: "spring",
+                    stiffness: 380,
+                    damping: 30,
+                  }}
                 />
               )}
 
               {/* Icon */}
-              <motion.div
-                animate={{
-                  scale: isActive ? 1.1 : 1,
-                  y: isActive ? -2 : 0,
-                }}
-                transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                className="relative"
-              >
+              <div className="relative">
                 <Icon
-                  className={`w-5 h-5 transition-colors ${
-                    isActive ? "text-primary" : "text-muted-foreground"
+                  className={`w-5 h-5 transition-all duration-200 ${
+                    isActive
+                      ? "text-primary scale-110"
+                      : "text-muted-foreground"
                   }`}
                   strokeWidth={isActive ? 2.5 : 2}
                 />
 
                 {/* Badge */}
-                {showBadge && (
-                  <motion.span
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full gold-gradient text-[10px] font-bold text-white flex items-center justify-center shadow-lg"
-                  >
-                    {itemsCount > 9 ? "9" : itemsCount}
-                  </motion.span>
+                {badgeCount > 0 && (
+                  <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full gold-gradient text-[10px] font-bold text-white flex items-center justify-center shadow-md">
+                    {badgeCount > 9 ? "9+" : badgeCount}
+                  </span>
                 )}
-              </motion.div>
+              </div>
 
               {/* Label */}
-              <motion.span
-                animate={{
-                  opacity: isActive ? 1 : 0.6,
-                  y: isActive ? 0 : 2,
-                }}
-                className={`text-[10px] mt-1 font-medium transition-colors ${
-                  isActive ? "text-primary" : "text-muted-foreground"
+              <span
+                className={`text-[10px] mt-1 font-medium transition-all duration-200 ${
+                  isActive
+                    ? "text-primary"
+                    : "text-muted-foreground opacity-70"
                 }`}
               >
                 {tab.label}
-              </motion.span>
-            </motion.button>
+              </span>
+            </button>
           );
         })}
       </div>
-    </motion.nav>
+    </nav>
   );
 });

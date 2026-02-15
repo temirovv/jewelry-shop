@@ -14,6 +14,19 @@ class TelegramAuthentication(BaseAuthentication):
 
     def authenticate(self, request):
         init_data = request.headers.get("X-Telegram-Init-Data")
+
+        # Development uchun mock user (DEBUG=True va header yo'q bo'lsa)
+        if not init_data and settings.DEBUG:
+            user, _ = TelegramUser.objects.get_or_create(
+                telegram_id=123456789,
+                defaults={
+                    "first_name": "Test",
+                    "last_name": "User",
+                    "username": "testuser",
+                },
+            )
+            return (user, None)
+
         if not init_data:
             return None
 

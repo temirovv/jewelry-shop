@@ -3,13 +3,22 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Category, Product
+from .models import Banner, Category, Product
 from .serializers import (
+    BannerSerializer,
     CategorySerializer,
     ProductListSerializer,
     ProductDetailSerializer,
 )
 from .filters import ProductFilter
+
+
+class BannerViewSet(viewsets.ReadOnlyModelViewSet):
+    """Bannerlar API"""
+
+    queryset = Banner.objects.filter(is_active=True)
+    serializer_class = BannerSerializer
+    pagination_class = None
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):

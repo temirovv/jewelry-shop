@@ -15,11 +15,25 @@ class Order(models.Model):
         ("cancelled", "Bekor qilingan"),
     ]
 
+    PAYMENT_METHOD_CHOICES = [
+        ("cash", "Naqd pul"),
+        ("transfer", "Karta o'tkazma"),
+    ]
+
     user = models.ForeignKey(
         TelegramUser, on_delete=models.PROTECT, related_name="orders"
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     total = models.DecimalField(max_digits=12, decimal_places=0, default=0)
+
+    # To'lov ma'lumotlari
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PAYMENT_METHOD_CHOICES,
+        default="cash",
+        verbose_name="To'lov usuli",
+    )
+    is_paid = models.BooleanField(default=False, verbose_name="To'langan")
 
     phone = models.CharField(max_length=20)
     delivery_address = models.TextField(blank=True)
@@ -59,6 +73,8 @@ class OrderItem(models.Model):
 
     @property
     def subtotal(self):
+        if self.price is None or self.quantity is None:
+            return 0
         return self.price * self.quantity
 
     def save(self, *args, **kwargs):

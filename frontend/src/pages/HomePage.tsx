@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "../components/Header";
 import { HeroBanner } from "../components/HeroBanner";
@@ -7,6 +8,7 @@ import { ProductCard, ProductCardSkeleton } from "../components/ProductCard";
 import { CartSheet } from "../components/CartSheet";
 import { QuickViewModal } from "../components/QuickViewModal";
 import { BottomNav } from "../components/BottomNav";
+import { SidebarMenu } from "../components/SidebarMenu";
 import { useCartStore } from "../stores/cartStore";
 import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../components/Toast";
@@ -14,13 +16,16 @@ import { getProducts, getCategories } from "../lib/api/products";
 import type { Product, Category } from "../types";
 
 export function HomePage() {
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string>();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"home" | "search" | "favorites" | "cart" | "profile">("home");
   const [error, setError] = useState<string | null>(null);
+
+  // Sidebar Menu
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Cart
   const [cartOpen, setCartOpen] = useState(false);
@@ -82,24 +87,29 @@ export function HomePage() {
 
   const handleProductPress = useCallback((product: Product) => {
     hapticFeedback?.impactOccurred?.("light");
-    // TODO: Navigate to product detail
-    handleQuickView(product);
-  }, [hapticFeedback, handleQuickView]);
+    navigate(`/product/${product.id}`);
+  }, [hapticFeedback, navigate]);
 
-  const handleTabChange = useCallback((tab: typeof activeTab) => {
-    setActiveTab(tab);
+  const handleTabChange = useCallback((tab: "home" | "search" | "favorites" | "cart" | "profile") => {
     hapticFeedback?.impactOccurred?.("light");
     if (tab === "cart") {
       setCartOpen(true);
+    } else if (tab === "search") {
+      navigate("/search");
+    } else if (tab === "favorites") {
+      navigate("/favorites");
+    } else if (tab === "profile") {
+      navigate("/profile");
     }
-  }, [hapticFeedback]);
+  }, [hapticFeedback, navigate]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
       <Header
+        onMenuClick={() => setMenuOpen(true)}
         onCartClick={() => setCartOpen(true)}
-        onSearchClick={() => setActiveTab("search")}
+        onSearchClick={() => navigate("/search")}
       />
 
       {/* Hero Banner */}
@@ -201,7 +211,7 @@ export function HomePage() {
       </div>
 
       {/* Bottom Navigation */}
-      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+      <BottomNav activeTab="home" onTabChange={handleTabChange} />
 
       {/* Cart Sheet */}
       <CartSheet
@@ -209,7 +219,7 @@ export function HomePage() {
         onOpenChange={setCartOpen}
         onCheckout={() => {
           setCartOpen(false);
-          // TODO: Navigate to checkout
+          navigate("/checkout");
         }}
       />
 
@@ -220,10 +230,13 @@ export function HomePage() {
         onOpenChange={setQuickViewOpen}
         onAddToCart={handleAddToCart}
         onViewDetail={(product) => {
-          // TODO: Navigate to product detail
-          console.log("View detail:", product.id);
+          setQuickViewOpen(false);
+          navigate(`/product/${product.id}`);
         }}
       />
+
+      {/* Sidebar Menu */}
+      <SidebarMenu open={menuOpen} onOpenChange={setMenuOpen} />
     </div>
   );
 }

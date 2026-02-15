@@ -1,0 +1,245 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+<style>
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: var(--color-bg-white, #fff);
+        border: 1px solid var(--color-border-layout, #e5e7eb);
+        border-radius: 12px;
+        padding: 1.25rem;
+        transition: box-shadow 0.2s;
+    }
+    .stat-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-bottom: 0.75rem;
+    }
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: var(--color-font-default, #111);
+    }
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--color-font-subtle-light, #6b7280);
+        margin-top: 0.25rem;
+    }
+    .stat-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+    }
+    .dashboard-section {
+        background: var(--color-bg-white, #fff);
+        border: 1px solid var(--color-border-layout, #e5e7eb);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    .dashboard-section h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .order-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--color-border-layout, #f3f4f6);
+    }
+    .order-row:last-child { border-bottom: none; }
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+    .two-col {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+    @media (max-width: 768px) {
+        .two-col { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div style="margin-bottom: 1.5rem;">
+    <h2 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.25rem;">
+        <span class="material-symbols-outlined" style="vertical-align: middle; margin-right: 4px;">dashboard</span>
+        Dashboard
+    </h2>
+    <p style="color: var(--color-font-subtle-light, #6b7280); font-size: 0.875rem;">
+        Jewelry Shop boshqaruv paneli
+    </p>
+</div>
+
+<!-- Statistika kartalar -->
+<div class="dashboard-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #fef3c7; color: #d97706;">
+            <span class="material-symbols-outlined">shopping_cart</span>
+        </div>
+        <div class="stat-value">{{ total_orders }}</div>
+        <div class="stat-label">Jami buyurtmalar</div>
+        {% if pending_orders > 0 %}
+        <div class="stat-badge" style="background: #fef3c7; color: #92400e;">
+            {{ pending_orders }} ta kutilmoqda
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #d1fae5; color: #059669;">
+            <span class="material-symbols-outlined">payments</span>
+        </div>
+        <div class="stat-value" style="font-size: 1.25rem;">{{ total_revenue }}</div>
+        <div class="stat-label">Jami daromad (so'm)</div>
+        <div class="stat-badge" style="background: #d1fae5; color: #065f46;">
+            Oylik: {{ month_revenue }}
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #dbeafe; color: #2563eb;">
+            <span class="material-symbols-outlined">group</span>
+        </div>
+        <div class="stat-value">{{ total_users }}</div>
+        <div class="stat-label">Foydalanuvchilar</div>
+        {% if new_users_week > 0 %}
+        <div class="stat-badge" style="background: #dbeafe; color: #1e40af;">
+            +{{ new_users_week }} bu hafta
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon" style="background: #fae8ff; color: #9333ea;">
+            <span class="material-symbols-outlined">diamond</span>
+        </div>
+        <div class="stat-value">{{ total_products }}</div>
+        <div class="stat-label">Mahsulotlar</div>
+        {% if out_of_stock > 0 %}
+        <div class="stat-badge" style="background: #fee2e2; color: #991b1b;">
+            {{ out_of_stock }} ta tugagan
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Ikki ustunli bo'lim -->
+<div class="two-col">
+    <!-- So'nggi buyurtmalar -->
+    <div class="dashboard-section">
+        <h3>
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">receipt_long</span>
+            So'nggi buyurtmalar
+        </h3>
+        {% for order in recent_orders %}
+        <div class="order-row">
+            <div>
+                <div style="font-weight: 600; font-size: 0.875rem;">
+                    #{{ order.id|stringformat:"05d" }}
+                    <span style="font-weight: 400; color: var(--color-font-subtle-light, #6b7280);">
+                        — {{ order.user.first_name|default:"Noma'lum" }}
+                    </span>
+                </div>
+                <div style="font-size: 0.75rem; color: var(--color-font-subtle-light, #9ca3af); margin-top: 2px;">
+                    {{ order.created_at|date:"d M Y, H:i" }}
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-weight: 600; font-size: 0.875rem;">
+                    {{ order.total|floatformat:0 }} so'm
+                </div>
+                <div style="font-size: 0.7rem; margin-top: 2px;">
+                    {% if order.status == "pending" %}
+                        <span class="status-dot" style="background: #f59e0b;"></span>Kutilmoqda
+                    {% elif order.status == "confirmed" %}
+                        <span class="status-dot" style="background: #3b82f6;"></span>Tasdiqlangan
+                    {% elif order.status == "processing" %}
+                        <span class="status-dot" style="background: #8b5cf6;"></span>Jarayonda
+                    {% elif order.status == "shipped" %}
+                        <span class="status-dot" style="background: #6366f1;"></span>Yo'lda
+                    {% elif order.status == "delivered" %}
+                        <span class="status-dot" style="background: #10b981;"></span>Yetkazildi
+                    {% elif order.status == "cancelled" %}
+                        <span class="status-dot" style="background: #ef4444;"></span>Bekor
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <p style="color: var(--color-font-subtle-light, #9ca3af); text-align: center; padding: 1rem;">
+            Buyurtmalar yo'q
+        </p>
+        {% endfor %}
+    </div>
+
+    <!-- Top mahsulotlar -->
+    <div class="dashboard-section">
+        <h3>
+            <span class="material-symbols-outlined" style="font-size: 1.1rem;">trending_up</span>
+            Top mahsulotlar
+        </h3>
+        {% for product in top_products %}
+        <div class="order-row">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: #fef3c7; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; color: #92400e;">
+                    {{ forloop.counter }}
+                </div>
+                <div>
+                    <div style="font-weight: 600; font-size: 0.875rem;">{{ product.name|truncatechars:30 }}</div>
+                    <div style="font-size: 0.75rem; color: var(--color-font-subtle-light, #9ca3af);">
+                        {{ product.order_count }} ta buyurtma
+                    </div>
+                </div>
+            </div>
+            <div style="font-weight: 600; font-size: 0.8rem;">
+                {{ product.price|floatformat:0 }} so'm
+            </div>
+        </div>
+        {% empty %}
+        <p style="color: var(--color-font-subtle-light, #9ca3af); text-align: center; padding: 1rem;">
+            Ma'lumot yo'q
+        </p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Faol savatlar -->
+<div class="dashboard-section">
+    <h3>
+        <span class="material-symbols-outlined" style="font-size: 1.1rem;">shopping_bag</span>
+        Faol savatlar: {{ active_carts }}
+    </h3>
+    <p style="color: var(--color-font-subtle-light, #9ca3af); font-size: 0.8rem;">
+        Hozirda {{ active_carts }} ta foydalanuvchining savatida mahsulotlar bor
+    </p>
+</div>
+{% endblock %}
