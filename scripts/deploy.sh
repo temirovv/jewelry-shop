@@ -12,12 +12,12 @@ set -e
 #    ./scripts/deploy.sh logs           # Loglarni ko'rish
 #    ./scripts/deploy.sh status         # Servislar holati
 #    ./scripts/deploy.sh rollback       # Oxirgi backupdan tiklash
+#    ./scripts/deploy.sh help           # Yordam
 # ============================================
 
 COMMAND=${1:-help}
 ENVIRONMENT=${2:-production}
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-DOMAIN="luxgold.uz"
 
 # Muhit sozlamalari
 if [ "$ENVIRONMENT" = "staging" ]; then
@@ -35,17 +35,68 @@ else
     LABEL="PRODUCTION"
 fi
 
-# .env dan DB sozlamalarini o'qish
+# .env dan sozlamalarni o'qish
 if [ -f "$PROJECT_DIR/$ENV_FILE" ]; then
     DB_USER=$(grep -E '^DB_USER=' "$PROJECT_DIR/$ENV_FILE" | cut -d'=' -f2 | tr -d ' ')
     DB_NAME=$(grep -E '^DB_NAME=' "$PROJECT_DIR/$ENV_FILE" | cut -d'=' -f2 | tr -d ' ')
+    DOMAIN=$(grep -E '^DOMAIN=' "$PROJECT_DIR/$ENV_FILE" | cut -d'=' -f2 | tr -d ' ')
 fi
 DB_USER="${DB_USER:-postgres}"
 DB_NAME="${DB_NAME:-jewelry_db}"
+DOMAIN="${DOMAIN:-luxgold.uz}"
 
 log() { echo -e "\n\033[1;36m==> $1\033[0m"; }
 ok()  { echo -e "\033[1;32m✓ $1\033[0m"; }
 err() { echo -e "\033[1;31m✗ $1\033[0m"; }
+
+# ---- Server Nginx configni yangilash ----
+update_nginx_config() {
+    # SSL sertifikat mavjudligini tekshirish
+    if [ -f "/etc/letsencrypt/live/${DOMAIN}/fullchain.pem" ]; then
+        log "Server Nginx HTTPS config yangilanmoqda..."
+        sudo tee /etc/nginx/sites-available/${DOMAIN} > /dev/null <<NGINXEOF
+server {
+    listen 80;
+    server_name ${DOMAIN} www.${DOMAIN};
+    return 301 https://\$host\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    client_max_body_size 20M;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}
+NGINXEOF
+    else
+        log "Server Nginx HTTP config yangilanmoqda..."
+        sudo tee /etc/nginx/sites-available/${DOMAIN} > /dev/null <<NGINXEOF
+server {
+    listen 80;
+    server_name ${DOMAIN} www.${DOMAIN};
+    location / { proxy_pass http://127.0.0.1:8080; }
+}
+NGINXEOF
+    fi
+
+    sudo ln -sf /etc/nginx/sites-available/${DOMAIN} /etc/nginx/sites-enabled/
+    sudo rm -f /etc/nginx/sites-enabled/default
+    sudo nginx -t && sudo systemctl reload nginx
+    ok "Server Nginx yangilandi (${DOMAIN})"
+}
 
 # ---- SETUP: Server tayyorlash ----
 cmd_setup() {
@@ -126,7 +177,7 @@ cmd_setup() {
     echo "  1) cd /var/www/jewelry-shop"
     echo "  2) nano .env          (env faylni to'ldiring)"
     echo "  3) ./scripts/deploy.sh deploy"
-    echo "  4) ./scripts/deploy.sh ssl"
+    echo "  4) ./scripts/deploy.sh ssl   (birinchi marta)"
     echo "============================================"
 }
 
@@ -136,6 +187,7 @@ cmd_deploy() {
     echo ""
     echo "============================================"
     echo "  Deploying to ${LABEL}"
+    echo "  Domain: ${DOMAIN}"
     echo "============================================"
 
     # Env fayl tekshirish
@@ -161,20 +213,24 @@ cmd_deploy() {
     log "Eski imagelarni tozalash..."
     docker image prune -f
 
+    # Server Nginx yangilash (agar mavjud bo'lsa)
+    if command -v nginx &>/dev/null; then
+        update_nginx_config
+    fi
+
     log "Health check..."
     cmd_health
 
     echo ""
-    ok "${LABEL} deploy muvaffaqiyatli!"
+    ok "${LABEL} deploy muvaffaqiyatli! (${DOMAIN})"
 }
 
 # ---- SSL: Sertifikat olish ----
 cmd_ssl() {
-    log "Nginx default configni o'chirish..."
+    log "Server Nginx vaqtincha config yaratish..."
     sudo rm -f /etc/nginx/sites-enabled/default
 
-    log "Vaqtincha config yaratish..."
-    sudo tee /etc/nginx/sites-available/luxgold > /dev/null <<NGINXEOF
+    sudo tee /etc/nginx/sites-available/${DOMAIN} > /dev/null <<NGINXEOF
 server {
     listen 80;
     server_name ${DOMAIN} www.${DOMAIN};
@@ -182,42 +238,15 @@ server {
 }
 NGINXEOF
 
-    sudo ln -sf /etc/nginx/sites-available/luxgold /etc/nginx/sites-enabled/
+    sudo ln -sf /etc/nginx/sites-available/${DOMAIN} /etc/nginx/sites-enabled/
     sudo nginx -t && sudo systemctl restart nginx
 
     log "SSL sertifikat olish..."
     sudo certbot --nginx -d "$DOMAIN" -d "www.${DOMAIN}"
 
-    log "HTTPS config yozish..."
-    sudo tee /etc/nginx/sites-available/luxgold > /dev/null <<NGINXEOF
-server {
-    listen 80;
-    server_name ${DOMAIN} www.${DOMAIN};
-    return 301 https://\$host\$request_uri;
-}
+    # SSL olgandan keyin to'liq HTTPS configni yozish
+    update_nginx_config
 
-server {
-    listen 443 ssl http2;
-    server_name ${DOMAIN} www.${DOMAIN};
-
-    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
-
-    client_max_body_size 20M;
-
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-    }
-}
-NGINXEOF
-
-    sudo nginx -t && sudo systemctl restart nginx
     ok "SSL tayyor! https://${DOMAIN}"
 }
 
@@ -319,20 +348,27 @@ cmd_help() {
     echo ""
     echo "Commands:"
     echo "  setup                 Server tayyorlash (Docker, Nginx, keys)"
-    echo "  deploy [env]          To'liq deploy (default: production)"
-    echo "  ssl                   SSL sertifikat olish"
+    echo "  deploy [env]          To'liq deploy (docker + nginx + health check)"
+    echo "  ssl                   SSL sertifikat olish (birinchi marta)"
     echo "  backup [env]          Database backup"
     echo "  rollback [env]        Oxirgi backupdan tiklash"
     echo "  health [env]          Health check"
     echo "  logs [env] [service]  Loglarni ko'rish"
     echo "  status [env]          Containerlar holati"
+    echo "  help                  Shu yordam"
     echo ""
     echo "Environments: production (default), staging"
+    echo ""
+    echo ".env dan o'qiladigan sozlamalar:"
+    echo "  DOMAIN       Domen nomi (default: luxgold.uz)"
+    echo "  DB_USER      Database user (default: postgres)"
+    echo "  DB_NAME      Database nomi (default: jewelry_db)"
     echo ""
     echo "Examples:"
     echo "  ./scripts/deploy.sh setup"
     echo "  ./scripts/deploy.sh deploy"
     echo "  ./scripts/deploy.sh deploy staging"
+    echo "  ./scripts/deploy.sh ssl"
     echo "  ./scripts/deploy.sh logs production backend"
     echo "  ./scripts/deploy.sh backup"
     echo ""
