@@ -83,15 +83,15 @@ collectstatic: ## Static fayllarni yig'ish
 
 deploy-staging: ## Staging serverga deploy
 	chmod +x scripts/deploy.sh
-	./scripts/deploy.sh staging
+	./scripts/deploy.sh deploy staging
 
 deploy-prod: ## Production serverga deploy
 	chmod +x scripts/deploy.sh
-	./scripts/deploy.sh production
+	./scripts/deploy.sh deploy
 
 healthcheck: ## Healthcheck ishga tushirish
-	chmod +x scripts/healthcheck.sh
-	./scripts/healthcheck.sh $(ENV)
+	chmod +x scripts/deploy.sh
+	./scripts/deploy.sh health $(ENV)
 
 # === Cleanup ===
 

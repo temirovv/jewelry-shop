@@ -36,23 +36,42 @@ Tekshirish: `ping luxgold.uz`
 
 ---
 
-## 3-QADAM: Loyihani klonlash
+## 3-QADAM: Deploy key yaratish (Private repo uchun)
+
+Repo private bo'lgani uchun serverda SSH deploy key yaratish kerak:
 
 ```bash
-sudo mkdir -p /var/www && cd /var/www
-git clone https://github.com/YOUR_USERNAME/jewelry-shop.git
-cd jewelry-shop
-mkdir -p backups
+ssh-keygen -t ed25519 -C "deploy-key" -f ~/.ssh/deploy_key -N ""
+cat ~/.ssh/deploy_key.pub
+```
+
+GitHub'da: **Repo** → **Settings** → **Deploy keys** → **Add deploy key**
+- Title: `Production Server`
+- Key: yuqoridagi `cat` natijasini paste qiling
+- "Allow write access" ni **belgilamang** (faqat o'qish kerak)
+
+Tekshirish:
+
+```bash
+GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+  git ls-remote git@github.com:temirovv/jewelry-shop.git
 ```
 
 ---
 
-## 4-QADAM: Frontend build
+## 4-QADAM: Loyihani klonlash
 
 ```bash
-docker run --rm -v $(pwd)/frontend:/app -w /app \
-  -e VITE_API_URL=https://luxgold.uz/api \
-  node:20-alpine sh -c "npm ci && npm run build"
+sudo mkdir -p /var/www && cd /var/www
+
+GIT_SSH_COMMAND="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" \
+  git clone git@github.com:temirovv/jewelry-shop.git
+
+cd jewelry-shop
+mkdir -p backups
+
+# Git'ga deploy key ni doimo ishlatishni sozlash
+git config core.sshCommand "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no"
 ```
 
 ---
@@ -81,36 +100,36 @@ WEBAPP_URL=https://luxgold.uz
 
 CORS_ALLOWED_ORIGINS=https://luxgold.uz,https://www.luxgold.uz
 API_BASE_URL=http://backend:8000/api
+
+VITE_API_URL=https://luxgold.uz/api
 ```
 
 > SECRET_KEY: `python3 -c "import secrets; print(secrets.token_urlsafe(50))"`
 
 ---
 
-## 6-QADAM: Docker nginx portini o'zgartirish
+## 6-QADAM: Containerlarni ishga tushirish
+
+Frontend build avtomatik — `docker compose up` o'zi `npm ci && npm run build` qiladi:
 
 ```bash
-nano docker-compose.prod.yml
-```
-
-Nginx bo'limida portni o'zgartiring:
-- `"80:80"` → `"8080:80"`
-- `"443:443"` qatorini o'chiring
-
----
-
-## 7-QADAM: Containerlarni ishga tushirish
-
-```bash
+cd /var/www/jewelry-shop
 docker compose -f docker-compose.prod.yml up -d --build
-docker compose -f docker-compose.prod.yml ps
 ```
 
-Tekshirish: `curl http://localhost:8080/api/products/`
+5 ta container: `db`, `backend`, `frontend` (build qilib chiqadi), `bot`, `nginx`
+
+Tekshirish:
+
+```bash
+docker compose -f docker-compose.prod.yml ps
+curl http://localhost:8080/api/products/
+curl http://localhost:8080/
+```
 
 ---
 
-## 8-QADAM: Superuser yaratish
+## 7-QADAM: Superuser yaratish
 
 ```bash
 docker compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
@@ -118,7 +137,7 @@ docker compose -f docker-compose.prod.yml exec backend python manage.py createsu
 
 ---
 
-## 9-QADAM: SSL sertifikat olish
+## 8-QADAM: SSL sertifikat olish
 
 ```bash
 sudo rm -f /etc/nginx/sites-enabled/default
@@ -139,7 +158,7 @@ sudo certbot --nginx -d luxgold.uz -d www.luxgold.uz
 
 ---
 
-## 10-QADAM: Nginx HTTPS config
+## 9-QADAM: Nginx HTTPS config
 
 ```bash
 sudo nano /etc/nginx/sites-available/luxgold
@@ -179,17 +198,16 @@ sudo nginx -t && sudo systemctl restart nginx
 
 ---
 
-## 11-QADAM: Tekshirish
+## 10-QADAM: Tekshirish
 
-| URL | Natija |
-|-----|--------|
-| https://luxgold.uz | Frontend |
-| https://luxgold.uz/api/products/ | API |
-| https://luxgold.uz/admin/ | Admin |
+Brauzerda:
+- https://luxgold.uz — Frontend
+- https://luxgold.uz/api/products/ — API
+- https://luxgold.uz/admin/ — Admin panel
 
 ---
 
-## 12-QADAM: Telegram Bot
+## 11-QADAM: Telegram Bot sozlash
 
 1. @BotFather → `/mybots` → bot tanlash
 2. `Bot Settings` → `Menu Button` → `Configure menu button`
@@ -197,25 +215,31 @@ sudo nginx -t && sudo systemctl restart nginx
 
 ---
 
-## 13-QADAM: GitHub Secrets (CI/CD)
+## 12-QADAM: GitHub Secrets (CI/CD avtomatik deploy)
 
-Serverda:
+### A) Serverda GitHub Actions uchun SSH key
+
 ```bash
-ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_deploy -N ""
-cat ~/.ssh/github_deploy.pub >> ~/.ssh/authorized_keys
-cat ~/.ssh/github_deploy   # GitHub Secret ga nusxalang
+ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_actions -N ""
+cat ~/.ssh/github_actions.pub >> ~/.ssh/authorized_keys
+cat ~/.ssh/github_actions   # GitHub Secret ga nusxalang
 ```
 
-GitHub → Settings → Secrets → Actions:
+### B) GitHub → Settings → Secrets → Actions
 
-| Secret | Qiymat |
-|--------|--------|
-| `PROD_SSH_HOST` | Server IP |
-| `PROD_SSH_USER` | root |
-| `PROD_SSH_KEY` | Private key |
-| `PROD_PROJECT_PATH` | /var/www/jewelry-shop |
-| `TELEGRAM_DEPLOY_BOT_TOKEN` | Bot token |
-| `TELEGRAM_DEPLOY_CHAT_ID` | Telegram ID |
+| Secret                       | Qiymat                          |
+|------------------------------|---------------------------------|
+| `PROD_SSH_HOST`              | Server IP manzili               |
+| `PROD_SSH_USER`              | root (yoki deploy user)         |
+| `PROD_SSH_KEY`               | `~/.ssh/github_actions` private |
+| `PROD_PROJECT_PATH`          | `/var/www/jewelry-shop`         |
+| `TELEGRAM_DEPLOY_BOT_TOKEN`  | Bot token                       |
+| `TELEGRAM_DEPLOY_CHAT_ID`    | Sizning Telegram ID             |
+
+### Natija:
+- `main` ga push → avtomatik production deploy
+- `develop` ga push → avtomatik staging deploy
+- Har bir deploy Telegram'ga xabar yuboradi
 
 ---
 
@@ -224,9 +248,17 @@ GitHub → Settings → Secrets → Actions:
 ```bash
 cd /var/www/jewelry-shop
 
-docker compose -f docker-compose.prod.yml logs -f backend     # Loglar
-docker compose -f docker-compose.prod.yml up -d --build        # Qayta build
+# Qo'lda deploy
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh production
+
+# Loglar
+docker compose -f docker-compose.prod.yml logs -f backend
+
+# Database backup
 docker compose -f docker-compose.prod.yml exec -T db \
   pg_dump -U postgres jewelry_db > backups/backup-$(date +%Y%m%d-%H%M%S).sql
-sudo certbot renew --dry-run                                    # SSL tekshirish
+
+# SSL tekshirish
+sudo certbot renew --dry-run
 ```

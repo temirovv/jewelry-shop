@@ -13,7 +13,6 @@ jobs:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     environment: staging
-    needs: []
 
     steps:
       - uses: actions/checkout@v4
@@ -29,85 +28,22 @@ jobs:
           ssh-keyscan -H ${{ secrets.STAGING_SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy
-        env:
-          SSH_USER: ${{ secrets.STAGING_SSH_USER }}
-          SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
-          PROJECT_PATH: ${{ secrets.STAGING_PROJECT_PATH }}
         run: |
-          ssh ${SSH_USER}@${SSH_HOST} << 'ENDSSH'
-            set -e
-            cd ${{ secrets.STAGING_PROJECT_PATH }}
-
-            echo "==> Pulling latest code..."
-            git fetch origin develop
-            git reset --hard origin/develop
-
-            echo "==> Building containers..."
-            docker compose -f docker-compose.staging.yml build --no-cache
-
-            echo "==> Starting services..."
-            docker compose -f docker-compose.staging.yml up -d
-
-            echo "==> Waiting for services to start..."
-            sleep 30
-
-            echo "==> Running migrations..."
-            docker compose -f docker-compose.staging.yml exec -T backend python manage.py migrate --noinput
-
-            echo "==> Collecting static files..."
-            docker compose -f docker-compose.staging.yml exec -T backend python manage.py collectstatic --noinput
-
-            echo "==> Cleaning up old images..."
-            docker image prune -f
-          ENDSSH
-
-      - name: Health check
-        env:
-          SSH_USER: ${{ secrets.STAGING_SSH_USER }}
-          SSH_HOST: ${{ secrets.STAGING_SSH_HOST }}
-          PROJECT_PATH: ${{ secrets.STAGING_PROJECT_PATH }}
-        run: |
-          ssh ${SSH_USER}@${SSH_HOST} << 'ENDSSH'
-            set -e
-            cd ${{ secrets.STAGING_PROJECT_PATH }}
-            chmod +x scripts/healthcheck.sh
-            ./scripts/healthcheck.sh staging
-          ENDSSH
+          ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} \
+            "cd ${{ secrets.STAGING_PROJECT_PATH }} && ./scripts/deploy.sh deploy staging"
 
       - name: Notify success
         if: success()
-        env:
-          BOT_TOKEN: ${{ secrets.TELEGRAM_DEPLOY_BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.TELEGRAM_DEPLOY_CHAT_ID }}
         run: |
-          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-            -d chat_id="${CHAT_ID}" \
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_DEPLOY_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_DEPLOY_CHAT_ID }}" \
             -d parse_mode="HTML" \
-            -d text="$(cat <<EOF
-          ✅ <b>Staging Deploy — Muvaffaqiyatli</b>
-
-          📦 Branch: <code>develop</code>
-          🔗 Commit: <code>${{ github.sha }}</code>
-          👤 Author: ${{ github.actor }}
-          🕐 $(date -u '+%Y-%m-%d %H:%M UTC')
-          EOF
-          )"
+            -d text="✅ <b>Staging Deploy — OK</b>%0A%0A📦 <code>develop</code>%0A🔗 <code>${{ github.sha }}</code>%0A👤 ${{ github.actor }}"
 
       - name: Notify failure
         if: failure()
-        env:
-          BOT_TOKEN: ${{ secrets.TELEGRAM_DEPLOY_BOT_TOKEN }}
-          CHAT_ID: ${{ secrets.TELEGRAM_DEPLOY_CHAT_ID }}
         run: |
-          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
-            -d chat_id="${CHAT_ID}" \
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_DEPLOY_BOT_TOKEN }}/sendMessage" \
+            -d chat_id="${{ secrets.TELEGRAM_DEPLOY_CHAT_ID }}" \
             -d parse_mode="HTML" \
-            -d text="$(cat <<EOF
-          ❌ <b>Staging Deploy — Xatolik!</b>
-
-          📦 Branch: <code>develop</code>
-          🔗 Commit: <code>${{ github.sha }}</code>
-          👤 Author: ${{ github.actor }}
-          🔍 <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Loglarni ko'rish</a>
-          EOF
-          )"
+            -d text="❌ <b>Staging Deploy — XATO!</b>%0A%0A📦 <code>develop</code>%0A👤 ${{ github.actor }}%0A🔍 <a href='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}'>Loglar</a>"
