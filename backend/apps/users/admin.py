@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.utils.html import format_html
+from django.db.models import Count, Sum
 from unfold.admin import ModelAdmin
-from unfold.decorators import display
+from unfold.decorators import display, action
 from .models import TelegramUser
 
 
@@ -12,6 +13,8 @@ class TelegramUserAdmin(ModelAdmin):
         "display_name",
         "username",
         "phone",
+        "display_orders_count",
+        "display_total_spent",
         "display_language",
         "display_status",
         "created_at",
@@ -24,6 +27,13 @@ class TelegramUserAdmin(ModelAdmin):
     list_filter_submit = True
     date_hierarchy = "created_at"
     list_per_page = 25
+    actions = ["activate_users", "deactivate_users"]
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(
+            orders_count=Count("orders"),
+            total_spent=Sum("orders__total"),
+        )
 
     fieldsets = (
         ("Telegram Ma'lumotlari", {
@@ -74,12 +84,40 @@ class TelegramUserAdmin(ModelAdmin):
     def display_language(self, obj):
         return obj.language
 
+    @display(description="Buyurtmalar", ordering="orders_count")
+    def display_orders_count(self, obj):
+        count = getattr(obj, "orders_count", 0)
+        if count > 0:
+            return format_html(
+                '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">{} ta</span>',
+                count,
+            )
+        return format_html('<span class="text-gray-400">0</span>')
+
+    @display(description="Jami xarid", ordering="total_spent")
+    def display_total_spent(self, obj):
+        total = getattr(obj, "total_spent", None)
+        if total is not None and total > 0:
+            formatted = f"{int(total):,}".replace(",", " ")
+            return format_html(
+                '<span class="font-semibold">{} so\'m</span>',
+                formatted,
+            )
+        return "—"
+
     @display(
         description="Holat",
-        label={
-            True: "success",
-            False: "danger",
-        },
+        label={True: "success", False: "danger"},
     )
     def display_status(self, obj):
         return obj.is_active
+
+    @action(description="Faollashtirish", icon="check_circle")
+    def activate_users(self, request, queryset):
+        queryset.update(is_active=True)
+        self.message_user(request, f"{queryset.count()} ta foydalanuvchi faollashtirildi.")
+
+    @action(description="O'chirish", icon="block")
+    def deactivate_users(self, request, queryset):
+        queryset.update(is_active=False)
+        self.message_user(request, f"{queryset.count()} ta foydalanuvchi o'chirildi.")

@@ -1,0 +1,135 @@
+name: CD — Production
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PROD_SSH_KEY }}
+
+      - name: Add server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.PROD_SSH_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Backup database
+        env:
+          SSH_USER: ${{ secrets.PROD_SSH_USER }}
+          SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          PROJECT_PATH: ${{ secrets.PROD_PROJECT_PATH }}
+        run: |
+          ssh ${SSH_USER}@${SSH_HOST} << 'ENDSSH'
+            set -e
+            cd ${{ secrets.PROD_PROJECT_PATH }}
+
+            mkdir -p backups
+            BACKUP_FILE="backups/backup-$(date +%Y%m%d-%H%M%S).sql"
+
+            echo "==> Creating database backup: ${BACKUP_FILE}"
+            docker compose -f docker-compose.prod.yml exec -T db pg_dump -U postgres jewelry_db > "${BACKUP_FILE}"
+
+            # Oxirgi 5 ta backupni saqlash, qolganlarni o'chirish
+            ls -t backups/backup-*.sql | tail -n +6 | xargs -r rm --
+            echo "==> Backup created successfully"
+          ENDSSH
+
+      - name: Deploy
+        env:
+          SSH_USER: ${{ secrets.PROD_SSH_USER }}
+          SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          PROJECT_PATH: ${{ secrets.PROD_PROJECT_PATH }}
+        run: |
+          ssh ${SSH_USER}@${SSH_HOST} << 'ENDSSH'
+            set -e
+            cd ${{ secrets.PROD_PROJECT_PATH }}
+
+            echo "==> Pulling latest code..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "==> Building containers..."
+            docker compose -f docker-compose.prod.yml build --no-cache
+
+            echo "==> Starting services..."
+            docker compose -f docker-compose.prod.yml up -d
+
+            echo "==> Waiting for services to start..."
+            sleep 30
+
+            echo "==> Running migrations..."
+            docker compose -f docker-compose.prod.yml exec -T backend python manage.py migrate --noinput
+
+            echo "==> Collecting static files..."
+            docker compose -f docker-compose.prod.yml exec -T backend python manage.py collectstatic --noinput
+
+            echo "==> Cleaning up old images..."
+            docker image prune -af
+          ENDSSH
+
+      - name: Health check
+        env:
+          SSH_USER: ${{ secrets.PROD_SSH_USER }}
+          SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          PROJECT_PATH: ${{ secrets.PROD_PROJECT_PATH }}
+        run: |
+          ssh ${SSH_USER}@${SSH_HOST} << 'ENDSSH'
+            set -e
+            cd ${{ secrets.PROD_PROJECT_PATH }}
+            chmod +x scripts/healthcheck.sh
+            ./scripts/healthcheck.sh production
+          ENDSSH
+
+      - name: Notify success
+        if: success()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_DEPLOY_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_DEPLOY_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d chat_id="${CHAT_ID}" \
+            -d parse_mode="HTML" \
+            -d text="$(cat <<EOF
+          🚀 <b>Production Deploy — Muvaffaqiyatli</b>
+
+          📦 Branch: <code>main</code>
+          🔗 Commit: <code>${{ github.sha }}</code>
+          👤 Author: ${{ github.actor }}
+          🕐 $(date -u '+%Y-%m-%d %H:%M UTC')
+          EOF
+          )"
+
+      - name: Notify failure
+        if: failure()
+        env:
+          BOT_TOKEN: ${{ secrets.TELEGRAM_DEPLOY_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.TELEGRAM_DEPLOY_CHAT_ID }}
+        run: |
+          curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            -d chat_id="${CHAT_ID}" \
+            -d parse_mode="HTML" \
+            -d text="$(cat <<EOF
+          🚨 <b>Production Deploy — XATOLIK!</b>
+
+          📦 Branch: <code>main</code>
+          🔗 Commit: <code>${{ github.sha }}</code>
+          👤 Author: ${{ github.actor }}
+          🔍 <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">Loglarni ko'rish</a>
+
+          ⚠️ Qo'lda tekshirish kerak!
+          EOF
+          )"

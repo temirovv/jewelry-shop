@@ -1,3 +1,13 @@
+export interface Banner {
+  id: number;
+  title: string;
+  subtitle: string;
+  emoji: string;
+  gradient: string;
+  link?: string;
+  image?: string;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -53,6 +63,8 @@ export interface User {
   language: "uz" | "ru";
 }
 
+export type PaymentMethod = "cash" | "transfer";
+
 export interface Order {
   id: number;
   user: User;
@@ -62,6 +74,9 @@ export interface Order {
   delivery_address?: string;
   phone: string;
   comment?: string;
+  payment_method: PaymentMethod;
+  payment_method_display: string;
+  is_paid: boolean;
   created_at: string;
 }
 

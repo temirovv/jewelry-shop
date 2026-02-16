@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     "unfold.contrib.filters",
     "unfold.contrib.forms",
     "unfold.contrib.inlines",
+    "unfold.contrib.import_export",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -28,6 +29,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "corsheaders",
     "django_filters",
+    "import_export",
     # Local apps
     "apps.users",
     "apps.products",
@@ -156,6 +158,8 @@ if DEBUG:
 
 # Telegram
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+BOT_TOKEN = os.getenv("BOT_TOKEN", TELEGRAM_BOT_TOKEN)  # Notification uchun
+ADMIN_IDS = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()]
 
 # Unfold Admin Configuration
 UNFOLD = {
@@ -173,6 +177,7 @@ UNFOLD = {
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": True,
     "ENVIRONMENT": "config.settings.environment_callback",
+    "DASHBOARD_CALLBACK": "config.dashboard.get_dashboard_callback",
     "COLORS": {
         "font": {
             "subtle-light": "107 114 128",
@@ -202,8 +207,8 @@ UNFOLD = {
                 "collapsible": True,
                 "items": [
                     {
-                        "title": "Bosh sahifa",
-                        "icon": "home",
+                        "title": "Dashboard",
+                        "icon": "dashboard",
                         "link": "/admin/",
                     },
                 ],
@@ -223,6 +228,11 @@ UNFOLD = {
                         "title": "Kategoriyalar",
                         "icon": "category",
                         "link": "/admin/products/category/",
+                    },
+                    {
+                        "title": "Bannerlar",
+                        "icon": "view_carousel",
+                        "link": "/admin/products/banner/",
                     },
                 ],
             },
@@ -298,8 +308,16 @@ UNFOLD = {
                     "link": "/admin/orders/order/?status=confirmed",
                 },
                 {
+                    "title": "Jarayonda",
+                    "link": "/admin/orders/order/?status=processing",
+                },
+                {
                     "title": "Yetkazilgan",
                     "link": "/admin/orders/order/?status=delivered",
+                },
+                {
+                    "title": "Bekor qilingan",
+                    "link": "/admin/orders/order/?status=cancelled",
                 },
             ],
         },

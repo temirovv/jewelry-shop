@@ -1,5 +1,5 @@
 import apiClient from "./client";
-import type { Order, CartItem } from "../../types";
+import type { Order, CartItem, PaymentMethod } from "../../types";
 
 export interface CreateOrderData {
   items: {
@@ -10,6 +10,7 @@ export interface CreateOrderData {
   phone: string;
   delivery_address?: string;
   comment?: string;
+  payment_method: PaymentMethod;
 }
 
 export async function createOrder(data: CreateOrderData): Promise<Order> {

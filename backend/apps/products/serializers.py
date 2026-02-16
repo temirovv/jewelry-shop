@@ -1,5 +1,13 @@
 from rest_framework import serializers
-from .models import Category, Product, ProductImage
+from .models import Banner, Category, Product, ProductImage
+
+
+class BannerSerializer(serializers.ModelSerializer):
+    """Banner serializeri"""
+
+    class Meta:
+        model = Banner
+        fields = ["id", "title", "subtitle", "emoji", "gradient", "link", "image"]
 
 
 class CategorySerializer(serializers.ModelSerializer):

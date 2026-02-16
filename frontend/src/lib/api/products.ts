@@ -46,6 +46,11 @@ export async function getCategories(): Promise<Category[]> {
   return response.data;
 }
 
+export async function getNewArrivals(): Promise<Product[]> {
+  const response = await apiClient.get<Product[]>("/products/new_arrivals/");
+  return response.data;
+}
+
 export async function getProductsByCategory(
   categorySlug: string
 ): Promise<PaginatedResponse<Product>> {

@@ -1,0 +1,72 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: jewelry_db_staging
+    restart: on-failure
+    environment:
+      POSTGRES_DB: ${DB_NAME:-jewelry_db_staging}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jewelry_backend_staging
+    restart: on-failure
+    env_file:
+      - .env.staging
+    environment:
+      - DEBUG=False
+      - DB_HOST=db
+    volumes:
+      - static_staging_volume:/app/staticfiles
+      - media_staging_volume:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+             python manage.py collectstatic --noinput &&
+             gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120"
+
+  bot:
+    build:
+      context: ./bot
+      dockerfile: Dockerfile
+    container_name: jewelry_bot_staging
+    restart: on-failure
+    env_file:
+      - .env.staging
+    environment:
+      - API_BASE_URL=http://backend:8000/api
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    container_name: jewelry_nginx_staging
+    restart: on-failure
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./frontend/dist:/usr/share/nginx/html
+      - static_staging_volume:/app/staticfiles
+      - media_staging_volume:/app/media
+    depends_on:
+      - backend
+
+volumes:
+  postgres_staging_data:
+  static_staging_volume:
+  media_staging_volume:

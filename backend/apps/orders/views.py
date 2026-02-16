@@ -1,9 +1,13 @@
+import logging
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
 from .models import Order, OrderItem
 from .serializers import OrderSerializer, CreateOrderSerializer
+from .utils import send_order_notification
 from apps.products.models import Product
+
+logger = logging.getLogger(__name__)
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -37,11 +41,20 @@ class OrderViewSet(viewsets.ModelViewSet):
             phone=data["phone"],
             delivery_address=data.get("delivery_address", ""),
             comment=data.get("comment", ""),
+            payment_method=data.get("payment_method", "cash"),
         )
 
-        # Elementlarni qo'shish
+        # Elementlarni qo'shish va stockni kamaytirish
         for item_data in data["items"]:
             product = Product.objects.get(id=item_data["product_id"])
+
+            if not product.in_stock:
+                order.delete()
+                return Response(
+                    {"error": f"'{product.name}' sotuvda yo'q"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
             OrderItem.objects.create(
                 order=order,
                 product=product,
@@ -51,6 +64,19 @@ class OrderViewSet(viewsets.ModelViewSet):
             )
 
         order.calculate_total()
+
+        # Buyurtmadan keyin foydalanuvchi savatini tozalash
+        try:
+            cart = request.user.cart
+            cart.items.all().delete()
+        except Exception:
+            pass
+
+        # Admin userlarga notification yuborish
+        try:
+            send_order_notification(order)
+        except Exception as e:
+            logger.error(f"Notification yuborishda xatolik: {e}")
 
         return Response(
             OrderSerializer(order).data,

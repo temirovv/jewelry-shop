@@ -102,7 +102,7 @@ def remove_from_cart(request, item_id):
         )
         cart_item.delete()
     except CartItem.DoesNotExist:
-        pass
+        return Response({"error": "Element topilmadi"}, status=404)
 
     cart = get_or_create_cart(request.user)
     return Response(CartSerializer(cart).data)
