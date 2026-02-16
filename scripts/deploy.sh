@@ -340,5 +340,6 @@ case "$COMMAND" in
     health)   cmd_health ;;
     logs)     cmd_logs ;;
     status)   cmd_status ;;
-    *)        cmd_help ;;
+    help)     cmd_help ;;
+    *)        err "Noma'lum komanda: $COMMAND"; cmd_help; exit 1 ;;
 esac
