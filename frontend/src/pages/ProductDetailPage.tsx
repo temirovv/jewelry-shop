@@ -6,20 +6,27 @@ import {
   Heart,
   ShoppingBag,
   Share2,
-  ChevronLeft,
-  ChevronRight,
   Minus,
   Plus,
+  PackageX,
+  Scale,
+  Gem,
+  Ruler,
+  CircleCheck,
+  CircleX,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Skeleton } from "../components/ui/skeleton";
+import { SectionHeader } from "../components/SectionHeader";
+import { ProductScroller } from "../components/ProductScroller";
 import { useCartStore } from "../stores/cartStore";
 import { useFavoritesStore } from "../stores/favoritesStore";
 import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../components/Toast";
-import { getProduct } from "../lib/api/products";
+import { getProduct, getProducts } from "../lib/api/products";
 import { formatPrice } from "../lib/utils";
+import { staggerContainerVariants, staggerItemVariants } from "../lib/animations";
 import type { Product } from "../types";
 
 export function ProductDetailPage() {
@@ -30,6 +37,8 @@ export function ProductDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
   const addItem = useCartStore((state) => state.addItem);
   const { toggleItem, isFavorite } = useFavoritesStore();
@@ -58,6 +67,24 @@ export function ProductDetailPage() {
     };
     fetchProduct();
   }, [id]);
+
+  // Fetch related products
+  useEffect(() => {
+    if (product?.category?.slug) {
+      getProducts({ category: product.category.slug })
+        .then((data) => {
+          setRelatedProducts(
+            data.results.filter((p) => p.id !== product.id).slice(0, 8)
+          );
+        })
+        .catch(() => {});
+    }
+  }, [product?.category?.slug, product?.id]);
+
+  // Reset zoom on image change
+  useEffect(() => {
+    setIsZoomed(false);
+  }, [currentImageIndex]);
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -123,7 +150,14 @@ export function ProductDetailPage() {
   if (error || !product) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <div className="text-6xl mb-4">😕</div>
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", damping: 15 }}
+          className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-5"
+        >
+          <PackageX className="w-12 h-12 text-muted-foreground" />
+        </motion.div>
         <h2 className="text-xl font-semibold mb-2">Mahsulot topilmadi</h2>
         <p className="text-muted-foreground mb-4 text-center">{error}</p>
         <Button onClick={() => navigate(-1)}>
@@ -138,10 +172,29 @@ export function ProductDetailPage() {
     ? Math.round(((product.old_price - product.price) / product.old_price) * 100)
     : 0;
 
+  const metalLabels: Record<string, string> = {
+    gold: "Oltin",
+    silver: "Kumush",
+    platinum: "Platina",
+    white_gold: "Oq oltin",
+  };
+
+  const specs = [
+    { icon: Gem, label: "Metall turi", value: metalLabels[product.metal_type] || product.metal_type },
+    { icon: Scale, label: "Og'irligi", value: `${product.weight} gr` },
+    ...(product.size ? [{ icon: Ruler, label: "O'lchami", value: product.size }] : []),
+    {
+      icon: product.in_stock ? CircleCheck : CircleX,
+      label: "Mavjudligi",
+      value: product.in_stock ? "Bor" : "Yo'q",
+      color: product.in_stock ? "text-green-600" : "text-red-500",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-background pb-32">
       {/* Image Gallery */}
-      <div className="relative aspect-square bg-muted">
+      <div className="relative aspect-square bg-muted overflow-hidden">
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
@@ -170,49 +223,57 @@ export function ProductDetailPage() {
           </button>
         </div>
 
-        {/* Main Image */}
+        {/* Main Image with swipe & zoom */}
         <AnimatePresence mode="wait">
-          <motion.img
+          <motion.div
             key={currentImageIndex}
-            src={product.images[currentImageIndex]?.image || "/placeholder.jpg"}
-            alt={product.name}
-            className="w-full h-full object-cover"
+            drag={!isZoomed ? "x" : false}
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.15}
+            onDragEnd={(_, info) => {
+              if (info.offset.x > 50) prevImage();
+              else if (info.offset.x < -50) nextImage();
+            }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-          />
+            className="w-full h-full cursor-grab active:cursor-grabbing"
+          >
+            <motion.img
+              src={product.images[currentImageIndex]?.image || "/placeholder.jpg"}
+              alt={product.name}
+              className="w-full h-full object-cover select-none"
+              animate={{ scale: isZoomed ? 2 : 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              onDoubleClick={() => setIsZoomed(!isZoomed)}
+              style={{
+                cursor: isZoomed ? "zoom-out" : "zoom-in",
+                transformOrigin: "center center",
+              }}
+              draggable={false}
+            />
+          </motion.div>
         </AnimatePresence>
 
-        {/* Navigation arrows */}
+        {/* Image counter */}
         {product.images.length > 1 && (
-          <>
-            <button
-              onClick={prevImage}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center"
-            >
-              <ChevronLeft className="w-6 h-6" />
-            </button>
-            <button
-              onClick={nextImage}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-background/60 backdrop-blur-sm flex items-center justify-center"
-            >
-              <ChevronRight className="w-6 h-6" />
-            </button>
-          </>
+          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-sm text-white text-xs font-medium">
+            {currentImageIndex + 1} / {product.images.length}
+          </div>
         )}
 
-        {/* Image indicators */}
+        {/* Image indicators — premium style */}
         {product.images.length > 1 && (
           <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
             {product.images.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
-                className={`w-2 h-2 rounded-full transition-all ${
+                className={`h-2.5 rounded-full transition-all duration-300 ${
                   index === currentImageIndex
-                    ? "w-6 bg-primary"
-                    : "bg-background/60"
+                    ? "w-8 gold-gradient shadow-md"
+                    : "w-2.5 bg-white/60 backdrop-blur-sm"
                 }`}
               />
             ))}
@@ -228,16 +289,16 @@ export function ProductDetailPage() {
       </div>
 
       {/* Product Info */}
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-5">
         {/* Category */}
         <Badge variant="secondary">{product.category.name}</Badge>
 
         {/* Name */}
-        <h1 className="text-2xl font-bold">{product.name}</h1>
+        <h1 className="text-2xl font-display font-bold">{product.name}</h1>
 
         {/* Price */}
         <div className="flex items-baseline gap-3">
-          <span className="text-2xl font-bold text-primary">
+          <span className="text-2xl font-display font-bold text-primary">
             {formatPrice(product.price)}
           </span>
           {product.old_price && (
@@ -245,46 +306,63 @@ export function ProductDetailPage() {
               {formatPrice(product.old_price)}
             </span>
           )}
+          {discountPercent > 0 && (
+            <Badge variant="sale" className="text-xs">-{discountPercent}%</Badge>
+          )}
         </div>
 
-        {/* Specs */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="p-3 rounded-xl bg-muted/50">
-            <span className="text-sm text-muted-foreground">Metall turi</span>
-            <p className="font-medium capitalize">
-              {product.metal_type.replace("_", " ")}
-            </p>
-          </div>
-          <div className="p-3 rounded-xl bg-muted/50">
-            <span className="text-sm text-muted-foreground">Og'irligi</span>
-            <p className="font-medium">{product.weight} gr</p>
-          </div>
-          {product.size && (
-            <div className="p-3 rounded-xl bg-muted/50">
-              <span className="text-sm text-muted-foreground">O'lchami</span>
-              <p className="font-medium">{product.size}</p>
-            </div>
-          )}
-          <div className="p-3 rounded-xl bg-muted/50">
-            <span className="text-sm text-muted-foreground">Mavjudligi</span>
-            <p
-              className={`font-medium ${
-                product.in_stock ? "text-green-600" : "text-red-500"
-              }`}
+        {/* Specs — premium cards with icons */}
+        <motion.div
+          variants={staggerContainerVariants}
+          initial="hidden"
+          animate="visible"
+          className="grid grid-cols-2 gap-3"
+        >
+          {specs.map((spec, i) => (
+            <motion.div
+              key={i}
+              variants={staggerItemVariants}
+              className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-50/50 to-transparent dark:from-amber-900/10 dark:to-transparent border border-amber-100/50 dark:border-amber-900/20"
             >
-              {product.in_stock ? "Bor" : "Yo'q"}
-            </p>
-          </div>
-        </div>
+              <spec.icon className="w-5 h-5 text-primary mb-2" />
+              <span className="text-xs text-muted-foreground block">{spec.label}</span>
+              <p className={`font-semibold text-sm ${spec.color || ""}`}>
+                {spec.value}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
 
         {/* Description */}
         <div>
-          <h3 className="font-semibold mb-2">Tavsif</h3>
-          <p className="text-muted-foreground leading-relaxed">
+          <h3 className="font-display font-semibold mb-2">Tavsif</h3>
+          <p className="text-muted-foreground leading-relaxed text-sm">
             {product.description}
           </p>
         </div>
       </div>
+
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-2 pb-4">
+          <SectionHeader
+            title="O'xshash mahsulotlar"
+            onAction={() => navigate(`/search?category=${product.category.slug}`)}
+          />
+          <ProductScroller
+            products={relatedProducts}
+            onProductPress={(p) => {
+              navigate(`/product/${p.id}`);
+              window.scrollTo(0, 0);
+            }}
+            onAddToCart={(p) => {
+              addItem(p, 1);
+              hapticFeedback?.impactOccurred?.("medium");
+              toast.success(`"${p.name}" savatga qo'shildi`);
+            }}
+          />
+        </div>
+      )}
 
       {/* Bottom Action Bar */}
       <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border/50 safe-area-bottom">

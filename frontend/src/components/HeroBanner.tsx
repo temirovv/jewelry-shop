@@ -54,7 +54,7 @@ function formatGradient(gradient: string): string {
   // Create light mode version
   const lightParts = parts.map((part) => {
     if (part.includes("/")) {
-      const [color, opacity] = part.split("/");
+      const [color] = part.split("/");
       // Convert opacity to lighter version for light mode
       const colorBase = color.replace("from-", "").replace("via-", "").replace("to-", "");
       const prefix = part.startsWith("from-") ? "from-" : part.startsWith("via-") ? "via-" : "to-";
@@ -136,11 +136,18 @@ export const HeroBanner = memo(function HeroBanner({ onExplore }: HeroBannerProp
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          dragElastic={0.2}
+          onDragEnd={(_, info) => {
+            if (info.offset.x > 50) prevSlide();
+            else if (info.offset.x < -50) nextSlide();
+          }}
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -50 }}
           transition={{ duration: 0.5 }}
-          className={`relative h-44 md:h-56 bg-gradient-to-r ${currentBanner.gradient} mx-4 rounded-2xl overflow-hidden`}
+          className={`relative h-44 md:h-56 bg-gradient-to-r ${currentBanner.gradient} mx-4 rounded-2xl overflow-hidden cursor-grab active:cursor-grabbing touch-pan-y`}
         >
           {/* Content */}
           <div className="absolute inset-0 flex items-center px-6">
@@ -193,18 +200,18 @@ export const HeroBanner = memo(function HeroBanner({ onExplore }: HeroBannerProp
         </motion.div>
       </AnimatePresence>
 
-      {/* Navigation Buttons */}
+      {/* Navigation Buttons — desktop only, mobile uses swipe */}
       {slides.length > 1 && (
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-6 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm shadow-lg flex items-center justify-center hover:bg-white transition-colors"
+            className="hidden md:flex absolute left-6 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm shadow-lg items-center justify-center hover:bg-white transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-6 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm shadow-lg flex items-center justify-center hover:bg-white transition-colors"
+            className="hidden md:flex absolute right-6 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/80 dark:bg-black/50 backdrop-blur-sm shadow-lg items-center justify-center hover:bg-white transition-colors"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

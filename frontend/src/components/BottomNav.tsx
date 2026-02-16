@@ -1,5 +1,5 @@
 import { memo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Home, Search, Heart, ShoppingBag, User } from "lucide-react";
 import { useCartStore } from "../stores/cartStore";
 import { useFavoritesStore } from "../stores/favoritesStore";
@@ -71,11 +71,20 @@ export const BottomNav = memo(function BottomNav({
                 />
 
                 {/* Badge */}
-                {badgeCount > 0 && (
-                  <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full gold-gradient text-[10px] font-bold text-white flex items-center justify-center shadow-md">
-                    {badgeCount > 9 ? "9+" : badgeCount}
-                  </span>
-                )}
+                <AnimatePresence mode="wait">
+                  {badgeCount > 0 && (
+                    <motion.span
+                      key={badgeCount}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                      className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 rounded-full gold-gradient text-[10px] font-bold text-white flex items-center justify-center shadow-md"
+                    >
+                      {badgeCount > 9 ? "9+" : badgeCount}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* Label */}

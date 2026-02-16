@@ -1,230 +1,232 @@
-# 🚀 Deployment Guide
+# Deploy Guide — luxgold.uz
 
-## Production Deployment
-
-### 1. Server talablari
-
-- Ubuntu 22.04+ yoki boshqa Linux
-- Docker & Docker Compose
-- Nginx (reverse proxy uchun)
-- SSL sertifikat (Let's Encrypt)
-- Domain nomi
-
-### 2. Domain sozlash
+## 1-QADAM: Server tayyorlash
 
 ```bash
-# A record
-your-domain.com -> SERVER_IP
-api.your-domain.com -> SERVER_IP
-```
-
-### 3. Server tayyorlash
-
-```bash
-# Update system
 sudo apt update && sudo apt upgrade -y
 
-# Install Docker
+# Docker
 curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
+sudo sh get-docker.sh && rm get-docker.sh
+sudo usermod -aG docker $USER
 
-# Install Docker Compose
-sudo apt install docker-compose-plugin
+# Docker Compose, Nginx, Certbot, Git
+sudo apt install -y docker-compose-plugin nginx certbot python3-certbot-nginx git
 
-# Install Nginx
-sudo apt install nginx certbot python3-certbot-nginx
+# Firewall
+sudo ufw allow OpenSSH
+sudo ufw allow 'Nginx Full'
+sudo ufw enable
 ```
 
-### 4. SSL sertifikat olish
+> `usermod` dan keyin `exit` qilib qayta SSH kiring.
+
+---
+
+## 2-QADAM: DNS sozlash
+
+Domen provayderingiz panelida:
+
+```
+A    luxgold.uz        → SERVER_IP
+A    www.luxgold.uz    → SERVER_IP
+```
+
+Tekshirish: `ping luxgold.uz`
+
+---
+
+## 3-QADAM: Loyihani klonlash
 
 ```bash
-sudo certbot --nginx -d your-domain.com -d api.your-domain.com
+sudo mkdir -p /var/www && cd /var/www
+git clone https://github.com/YOUR_USERNAME/jewelry-shop.git
+cd jewelry-shop
+mkdir -p backups
 ```
 
-### 5. Nginx konfiguratsiya
+---
 
-```nginx
-# /etc/nginx/sites-available/jewelry
+## 4-QADAM: Frontend build
 
-# Frontend
-server {
-    listen 443 ssl http2;
-    server_name your-domain.com;
+```bash
+docker run --rm -v $(pwd)/frontend:/app -w /app \
+  -e VITE_API_URL=https://luxgold.uz/api \
+  node:20-alpine sh -c "npm ci && npm run build"
+```
 
-    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+---
 
-    location / {
-        proxy_pass http://localhost:3000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
+## 5-QADAM: .env fayl yaratish
 
-# Backend API
-server {
-    listen 443 ssl http2;
-    server_name api.your-domain.com;
+```bash
+nano .env
+```
 
-    ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
+```env
+SECRET_KEY=juda-uzun-murakkab-kalit
+DEBUG=False
+ALLOWED_HOSTS=luxgold.uz,www.luxgold.uz
 
-    location / {
-        proxy_pass http://localhost:8000;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
+DB_NAME=jewelry_db
+DB_USER=postgres
+DB_PASSWORD=KuChLi_PaRoL_123!
+DB_HOST=db
+DB_PORT=5432
 
-    location /static/ {
-        alias /var/www/jewelry/staticfiles/;
-    }
+TELEGRAM_BOT_TOKEN=your-bot-token
+BOT_TOKEN=your-bot-token
+ADMIN_IDS=your_telegram_id
+WEBAPP_URL=https://luxgold.uz
 
-    location /media/ {
-        alias /var/www/jewelry/media/;
-    }
-}
+CORS_ALLOWED_ORIGINS=https://luxgold.uz,https://www.luxgold.uz
+API_BASE_URL=http://backend:8000/api
+```
 
-# HTTP -> HTTPS redirect
+> SECRET_KEY: `python3 -c "import secrets; print(secrets.token_urlsafe(50))"`
+
+---
+
+## 6-QADAM: Docker nginx portini o'zgartirish
+
+```bash
+nano docker-compose.prod.yml
+```
+
+Nginx bo'limida portni o'zgartiring:
+- `"80:80"` → `"8080:80"`
+- `"443:443"` qatorini o'chiring
+
+---
+
+## 7-QADAM: Containerlarni ishga tushirish
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml ps
+```
+
+Tekshirish: `curl http://localhost:8080/api/products/`
+
+---
+
+## 8-QADAM: Superuser yaratish
+
+```bash
+docker compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
+```
+
+---
+
+## 9-QADAM: SSL sertifikat olish
+
+```bash
+sudo rm -f /etc/nginx/sites-enabled/default
+
+sudo tee /etc/nginx/sites-available/luxgold > /dev/null <<'EOF'
 server {
     listen 80;
-    server_name your-domain.com api.your-domain.com;
+    server_name luxgold.uz www.luxgold.uz;
+    location / { proxy_pass http://127.0.0.1:8080; }
+}
+EOF
+
+sudo ln -sf /etc/nginx/sites-available/luxgold /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl restart nginx
+
+sudo certbot --nginx -d luxgold.uz -d www.luxgold.uz
+```
+
+---
+
+## 10-QADAM: Nginx HTTPS config
+
+```bash
+sudo nano /etc/nginx/sites-available/luxgold
+```
+
+```nginx
+server {
+    listen 80;
+    server_name luxgold.uz www.luxgold.uz;
     return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name luxgold.uz www.luxgold.uz;
+
+    ssl_certificate /etc/letsencrypt/live/luxgold.uz/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/luxgold.uz/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    client_max_body_size 20M;
+
+    location / {
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 }
 ```
 
-### 6. Environment fayllar
-
 ```bash
-# .env (root directory)
-BOT_TOKEN=your-bot-token
-WEBAPP_URL=https://your-domain.com
-SECRET_KEY=your-secret-key
-DEBUG=False
-ALLOWED_HOSTS=api.your-domain.com
-CORS_ALLOWED_ORIGINS=https://your-domain.com
-```
-
-### 7. Deploy
-
-```bash
-# Clone project
-git clone https://github.com/your-username/jewelry-shop.git
-cd jewelry-shop
-
-# Start services
-docker-compose -f docker-compose.yml up -d --build
-
-# Check status
-docker-compose ps
-
-# View logs
-docker-compose logs -f
-```
-
-### 8. Database migration
-
-```bash
-docker-compose exec backend python manage.py migrate
-docker-compose exec backend python manage.py createsuperuser
+sudo nginx -t && sudo systemctl restart nginx
 ```
 
 ---
 
-## Telegram Bot sozlash
+## 11-QADAM: Tekshirish
 
-### 1. BotFather orqali
-
-1. @BotFather ga `/newbot` yuboring
-2. Bot nomini kiriting
-3. Bot username kiriting
-4. TOKEN oling
-
-### 2. WebApp sozlash
-
-1. @BotFather ga `/mybots` yuboring
-2. Botingizni tanlang
-3. `Bot Settings` -> `Menu Button` -> `Configure menu button`
-4. WebApp URL kiriting: `https://your-domain.com`
-
-### 3. Bot tokenni .env ga qo'shing
-
-```bash
-BOT_TOKEN=123456789:ABCdefGHIjklMNOpqrsTUVwxyz
-```
+| URL | Natija |
+|-----|--------|
+| https://luxgold.uz | Frontend |
+| https://luxgold.uz/api/products/ | API |
+| https://luxgold.uz/admin/ | Admin |
 
 ---
 
-## Monitoring
+## 12-QADAM: Telegram Bot
 
-### Docker logs
-
-```bash
-# All services
-docker-compose logs -f
-
-# Specific service
-docker-compose logs -f backend
-docker-compose logs -f bot
-```
-
-### Health check
-
-```bash
-# Backend
-curl https://api.your-domain.com/api/categories/
-
-# Frontend
-curl https://your-domain.com
-```
+1. @BotFather → `/mybots` → bot tanlash
+2. `Bot Settings` → `Menu Button` → `Configure menu button`
+3. URL: `https://luxgold.uz`, Text: `Do'kon`
 
 ---
 
-## Backup
+## 13-QADAM: GitHub Secrets (CI/CD)
 
-### Database backup
-
+Serverda:
 ```bash
-docker-compose exec db pg_dump -U postgres jewelry_db > backup.sql
+ssh-keygen -t ed25519 -C "github-actions" -f ~/.ssh/github_deploy -N ""
+cat ~/.ssh/github_deploy.pub >> ~/.ssh/authorized_keys
+cat ~/.ssh/github_deploy   # GitHub Secret ga nusxalang
 ```
 
-### Media backup
+GitHub → Settings → Secrets → Actions:
 
-```bash
-tar -czvf media_backup.tar.gz ./backend/media
-```
-
-### Restore
-
-```bash
-cat backup.sql | docker-compose exec -T db psql -U postgres jewelry_db
-```
+| Secret | Qiymat |
+|--------|--------|
+| `PROD_SSH_HOST` | Server IP |
+| `PROD_SSH_USER` | root |
+| `PROD_SSH_KEY` | Private key |
+| `PROD_PROJECT_PATH` | /var/www/jewelry-shop |
+| `TELEGRAM_DEPLOY_BOT_TOKEN` | Bot token |
+| `TELEGRAM_DEPLOY_CHAT_ID` | Telegram ID |
 
 ---
 
-## CI/CD (GitHub Actions)
+## Foydali buyruqlar
 
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy
+```bash
+cd /var/www/jewelry-shop
 
-on:
-  push:
-    branches: [main]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy to server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            cd /var/www/jewelry-shop
-            git pull origin main
-            docker-compose up -d --build
+docker compose -f docker-compose.prod.yml logs -f backend     # Loglar
+docker compose -f docker-compose.prod.yml up -d --build        # Qayta build
+docker compose -f docker-compose.prod.yml exec -T db \
+  pg_dump -U postgres jewelry_db > backups/backup-$(date +%Y%m%d-%H%M%S).sql
+sudo certbot renew --dry-run                                    # SSL tekshirish
 ```

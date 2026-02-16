@@ -161,36 +161,50 @@ export const ProductCard = memo(function ProductCard({
             </motion.div>
           </motion.button>
 
-          {/* Action Buttons */}
-          <AnimatePresence>
-            {product.in_stock && isHovered && (
-              <motion.div
-                className="absolute bottom-3 left-3 right-3 flex gap-2"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                transition={{ ...springs.snappy }}
+          {/* Action Buttons — Desktop: hover, Mobile: always visible */}
+          {product.in_stock && (
+            <>
+              {/* Desktop hover buttons */}
+              <AnimatePresence>
+                {isHovered && (
+                  <motion.div
+                    className="hidden md:flex absolute bottom-3 left-3 right-3 gap-2"
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ ...springs.snappy }}
+                  >
+                    <Button
+                      variant="gold"
+                      size="sm"
+                      className="flex-1 shadow-xl"
+                      onClick={handleAddToCart}
+                    >
+                      <ShoppingBag className="h-4 w-4 mr-1.5" />
+                      Savatga
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="px-3 bg-white/90 backdrop-blur-md shadow-xl"
+                      onClick={handleQuickView}
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Mobile always-visible cart button */}
+              <motion.button
+                className="md:hidden absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full gold-gradient flex items-center justify-center shadow-lg active:scale-90 transition-transform"
+                onClick={handleAddToCart}
+                whileTap={{ scale: 0.85 }}
               >
-                <Button
-                  variant="gold"
-                  size="sm"
-                  className="flex-1 shadow-xl"
-                  onClick={handleAddToCart}
-                >
-                  <ShoppingBag className="h-4 w-4 mr-1.5" />
-                  Savatga
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="px-3 bg-white/90 backdrop-blur-md shadow-xl"
-                  onClick={handleQuickView}
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <ShoppingBag className="h-4 w-4 text-white" />
+              </motion.button>
+            </>
+          )}
 
           {/* Out of Stock Overlay */}
           {!product.in_stock && (

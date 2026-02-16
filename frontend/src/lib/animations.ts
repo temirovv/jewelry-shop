@@ -337,6 +337,16 @@ export const listItemVariants: Variants = {
   },
 };
 
+// Scroll reveal animation
+export const scrollRevealVariants: Variants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { ...springs.smooth }
+  },
+};
+
 // Tap feedback for all interactive elements
 export const tapFeedback = {
   whileTap: { scale: 0.97 },

@@ -92,21 +92,64 @@ export function CheckoutPage() {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", damping: 15 }}
-          className="w-24 h-24 rounded-full gold-gradient flex items-center justify-center mb-6"
-        >
-          <CheckCircle className="w-12 h-12 text-white" />
-        </motion.div>
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center overflow-hidden">
+        {/* Pulsating gold rings */}
+        <div className="relative mb-6">
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={i}
+              className="absolute inset-0 rounded-full border-2 border-primary/30"
+              initial={{ scale: 1, opacity: 0.6 }}
+              animate={{ scale: 2.5 + i * 0.5, opacity: 0 }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                delay: i * 0.5,
+                ease: "easeOut",
+              }}
+              style={{ width: 96, height: 96 }}
+            />
+          ))}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", damping: 12, stiffness: 200 }}
+            className="relative w-24 h-24 rounded-full gold-gradient flex items-center justify-center shadow-xl"
+          >
+            <CheckCircle className="w-12 h-12 text-white" />
+          </motion.div>
+        </div>
+
+        {/* Confetti dots */}
+        {Array.from({ length: 8 }).map((_, i) => {
+          const angle = (i / 8) * Math.PI * 2;
+          const distance = 120 + Math.random() * 40;
+          return (
+            <motion.div
+              key={`confetti-${i}`}
+              className="absolute w-2 h-2 rounded-full gold-gradient"
+              initial={{ x: 0, y: 0, scale: 0, opacity: 1 }}
+              animate={{
+                x: Math.cos(angle) * distance,
+                y: Math.sin(angle) * distance - 60,
+                scale: [0, 1.2, 0.8],
+                opacity: [0, 1, 0],
+              }}
+              transition={{
+                duration: 1,
+                delay: 0.3 + i * 0.06,
+                ease: "easeOut",
+              }}
+              style={{ top: "50%", left: "50%" }}
+            />
+          );
+        })}
 
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-2xl font-bold mb-2"
+          className="text-2xl font-display font-bold mb-2"
         >
           Buyurtma qabul qilindi!
         </motion.h1>

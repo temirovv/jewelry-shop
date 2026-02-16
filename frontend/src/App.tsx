@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { Sparkles } from "lucide-react";
 import { HomePage } from "./pages/HomePage";
 import { ProductDetailPage } from "./pages/ProductDetailPage";
 import { CheckoutPage } from "./pages/CheckoutPage";
@@ -139,7 +140,7 @@ function AppContent() {
             }}
             className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center"
           >
-            <span className="text-2xl">✨</span>
+            <Sparkles className="w-7 h-7 text-white" />
           </motion.div>
           <p className="text-muted-foreground text-sm">Yuklanmoqda...</p>
         </motion.div>

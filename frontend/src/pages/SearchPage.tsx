@@ -297,7 +297,14 @@ export function SearchPage() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center py-16"
             >
-              <div className="text-5xl mb-4">🔍</div>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", damping: 15, delay: 0.1 }}
+                className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-5"
+              >
+                <Search className="w-10 h-10 text-muted-foreground" />
+              </motion.div>
               <h3 className="font-medium mb-1">Hech narsa topilmadi</h3>
               <p className="text-sm text-muted-foreground mb-4">
                 Boshqa so'z yoki filtr bilan urinib ko'ring
