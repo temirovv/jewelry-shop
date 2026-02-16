@@ -35,6 +35,14 @@ else
     LABEL="PRODUCTION"
 fi
 
+# .env dan DB sozlamalarini o'qish
+if [ -f "$PROJECT_DIR/$ENV_FILE" ]; then
+    DB_USER=$(grep -E '^DB_USER=' "$PROJECT_DIR/$ENV_FILE" | cut -d'=' -f2 | tr -d ' ')
+    DB_NAME=$(grep -E '^DB_NAME=' "$PROJECT_DIR/$ENV_FILE" | cut -d'=' -f2 | tr -d ' ')
+fi
+DB_USER="${DB_USER:-postgres}"
+DB_NAME="${DB_NAME:-jewelry_db}"
+
 log() { echo -e "\n\033[1;36m==> $1\033[0m"; }
 ok()  { echo -e "\033[1;32m✓ $1\033[0m"; }
 err() { echo -e "\033[1;31m✗ $1\033[0m"; }
@@ -220,7 +228,7 @@ cmd_backup() {
     BACKUP_FILE="backups/backup-$(date +%Y%m%d-%H%M%S).sql"
 
     log "Database backup yaratish..."
-    docker compose -f "$COMPOSE_FILE" exec -T db pg_dump -U postgres jewelry_db > "$BACKUP_FILE"
+    docker compose -f "$COMPOSE_FILE" exec -T db pg_dump -U "$DB_USER" "$DB_NAME" > "$BACKUP_FILE"
 
     # Oxirgi 5 ta backup saqlash
     ls -t backups/backup-*.sql 2>/dev/null | tail -n +6 | xargs -r rm --
@@ -238,7 +246,7 @@ cmd_rollback() {
     fi
 
     log "Tiklanmoqda: ${LATEST}"
-    cat "$LATEST" | docker compose -f "$COMPOSE_FILE" exec -T db psql -U postgres jewelry_db
+    cat "$LATEST" | docker compose -f "$COMPOSE_FILE" exec -T db psql -U "$DB_USER" "$DB_NAME"
     ok "Database tiklandi"
 }
 

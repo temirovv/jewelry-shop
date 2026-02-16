@@ -67,12 +67,12 @@ shell: ## Django shell ochish
 
 backup: ## Database backup yaratish
 	@mkdir -p backups
-	docker compose exec -T db pg_dump -U postgres jewelry_db > backups/backup-$$(date +%Y%m%d-%H%M%S).sql
+	docker compose exec -T db pg_dump -U $${DB_USER:-postgres} $${DB_NAME:-jewelry_db} > backups/backup-$$(date +%Y%m%d-%H%M%S).sql
 	@echo "Backup yaratildi: backups/"
 
 restore: ## Oxirgi backupdan tiklash (make restore FILE=backups/backup-xxx.sql)
 	@if [ -z "$(FILE)" ]; then echo "Usage: make restore FILE=backups/backup-xxx.sql"; exit 1; fi
-	cat $(FILE) | docker compose exec -T db psql -U postgres jewelry_db
+	cat $(FILE) | docker compose exec -T db psql -U $${DB_USER:-postgres} $${DB_NAME:-jewelry_db}
 
 # === Static ===
 
