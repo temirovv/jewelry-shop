@@ -2,7 +2,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 from apps.orders.models import Order
-from apps.products.models import Product, Category
+from apps.products.models import Product
 from apps.users.models import TelegramUser
 from apps.cart.models import Cart
 

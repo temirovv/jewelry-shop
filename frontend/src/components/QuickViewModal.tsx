@@ -1,4 +1,4 @@
-import { memo, useState, useEffect } from "react";
+import { memo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X, ShoppingBag, Heart, Minus, Plus, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
@@ -25,14 +25,17 @@ export const QuickViewModal = memo(function QuickViewModal({
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [lastProductId, setLastProductId] = useState<number | null>(null);
 
   // Reset state when product changes or modal opens
-  useEffect(() => {
-    if (open && product) {
-      setQuantity(1);
-      setCurrentImageIndex(0);
-    }
-  }, [open, product?.id]);
+  if (open && product && product.id !== lastProductId) {
+    setLastProductId(product.id);
+    setQuantity(1);
+    setCurrentImageIndex(0);
+  }
+  if (!open && lastProductId !== null) {
+    setLastProductId(null);
+  }
 
   if (!product) return null;
 

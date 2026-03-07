@@ -14,7 +14,7 @@ import { BottomNav } from "../components/BottomNav";
 import { SidebarMenu } from "../components/SidebarMenu";
 import { useCartStore } from "../stores/cartStore";
 import { useTelegram } from "../hooks/useTelegram";
-import { toast } from "../components/Toast";
+import { toast } from "../stores/toastStore";
 import { getProducts, getCategories, getNewArrivals, getFeaturedProducts } from "../lib/api/products";
 import { scrollRevealVariants } from "../lib/animations";
 import type { Product, Category } from "../types";

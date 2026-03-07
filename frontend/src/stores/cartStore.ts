@@ -26,7 +26,7 @@ interface CartState {
 
 // Backend bilan sinxronizatsiya qilish (xatolikni yutib yuboradi)
 async function syncToBackend(
-  action: () => Promise<any>
+  action: () => Promise<{ items?: CartItem[] }>
 ): Promise<CartItem[] | null> {
   try {
     const cart = await action();

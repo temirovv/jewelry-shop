@@ -66,7 +66,6 @@ export function ProfilePage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Profil store'da bo'lmasa olish
         if (!profile) {
           await fetchProfile();
         }
@@ -79,6 +78,7 @@ export function ProfilePage() {
       }
     };
     fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Store'dagi profil o'zgarganda inputlarni yangilash

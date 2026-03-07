@@ -5,7 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api"
 // Get Telegram WebApp safely
 const getTelegramWebApp = () => {
   try {
-    return (window as any).Telegram?.WebApp;
+    return (window as unknown as { Telegram?: { WebApp?: { initData?: string } } }).Telegram?.WebApp;
   } catch {
     return null;
   }

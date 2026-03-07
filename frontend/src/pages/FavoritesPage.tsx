@@ -9,7 +9,7 @@ import { CartSheet } from "../components/CartSheet";
 import { useFavoritesStore } from "../stores/favoritesStore";
 import { useCartStore } from "../stores/cartStore";
 import { useTelegram } from "../hooks/useTelegram";
-import { toast } from "../components/Toast";
+import { toast } from "../stores/toastStore";
 import { useState } from "react";
 import type { Product } from "../types";
 

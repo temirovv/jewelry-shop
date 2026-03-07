@@ -23,7 +23,7 @@ import { ProductScroller } from "../components/ProductScroller";
 import { useCartStore } from "../stores/cartStore";
 import { useFavoritesStore } from "../stores/favoritesStore";
 import { useTelegram } from "../hooks/useTelegram";
-import { toast } from "../components/Toast";
+import { toast } from "../stores/toastStore";
 import { getProduct, getProducts } from "../lib/api/products";
 import { formatPrice } from "../lib/utils";
 import { staggerContainerVariants, staggerItemVariants } from "../lib/animations";
@@ -59,7 +59,7 @@ export function ProductDetailPage() {
       try {
         const data = await getProduct(Number(id));
         setProduct(data);
-      } catch (err) {
+      } catch {
         setError("Mahsulot topilmadi");
       } finally {
         setIsLoading(false);

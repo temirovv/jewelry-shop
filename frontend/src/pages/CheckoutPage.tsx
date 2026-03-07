@@ -17,7 +17,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useCartStore } from "../stores/cartStore";
 import { useTelegram } from "../hooks/useTelegram";
-import { toast } from "../components/Toast";
+import { toast } from "../stores/toastStore";
 import { createOrder, prepareOrderItems } from "../lib/api/orders";
 import { formatPrice } from "../lib/utils";
 import type { PaymentMethod } from "../types";
@@ -82,7 +82,7 @@ export function CheckoutPage() {
       setIsSuccess(true);
       clearCart();
       hapticFeedback?.notificationOccurred?.("success");
-    } catch (err) {
+    } catch {
       toast.error("Buyurtma yaratishda xatolik");
       hapticFeedback?.notificationOccurred?.("error");
     } finally {

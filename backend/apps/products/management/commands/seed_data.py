@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from apps.products.models import Category, Product, ProductImage
+from apps.products.models import Category, Product
 
 
 class Command(BaseCommand):

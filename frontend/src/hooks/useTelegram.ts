@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 
 interface TelegramUser {
   id: number;
@@ -23,8 +23,30 @@ interface HapticFeedback {
   selectionChanged: () => void;
 }
 
+interface TelegramWebApp {
+  initData: string;
+  initDataUnsafe: { user?: TelegramUser };
+  colorScheme: "light" | "dark";
+  themeParams: ThemeParams;
+  HapticFeedback: HapticFeedback;
+  MainButton: {
+    setText: (text: string) => void;
+    onClick: (cb: () => void) => void;
+    show: () => void;
+    hide: () => void;
+  };
+  BackButton: {
+    onClick: (cb: () => void) => void;
+    show: () => void;
+    hide: () => void;
+  };
+  ready: () => void;
+  expand: () => void;
+  close: () => void;
+}
+
 interface UseTelegramReturn {
-  webApp: any;
+  webApp: TelegramWebApp | null;
   user: TelegramUser | null;
   isReady: boolean;
   isTelegram: boolean;
@@ -40,12 +62,16 @@ interface UseTelegramReturn {
 }
 
 // Check if running in Telegram WebApp
-const isTelegramWebApp = (): boolean => {
+const getTelegramWebApp = (): TelegramWebApp | null => {
   try {
-    return !!(window as any).Telegram?.WebApp?.initData;
+    const tg = (window as unknown as { Telegram?: { WebApp?: TelegramWebApp } }).Telegram;
+    if (tg?.WebApp?.initData) {
+      return tg.WebApp;
+    }
   } catch {
-    return false;
+    // not in Telegram
   }
+  return null;
 };
 
 // Mock haptic feedback for browser
@@ -56,79 +82,56 @@ const mockHapticFeedback: HapticFeedback = {
 };
 
 export function useTelegram(): UseTelegramReturn {
-  const [isReady, setIsReady] = useState(false);
-  const [user, setUser] = useState<TelegramUser | null>(null);
-  const [isTelegram, setIsTelegram] = useState(false);
-
-  useEffect(() => {
-    const checkTelegram = isTelegramWebApp();
-    setIsTelegram(checkTelegram);
-
-    if (checkTelegram) {
-      const WebApp = (window as any).Telegram.WebApp;
-      WebApp.ready();
-      WebApp.expand();
-
-      if (WebApp.initDataUnsafe?.user) {
-        setUser(WebApp.initDataUnsafe.user);
-      }
+  const [webApp] = useState(() => {
+    const app = getTelegramWebApp();
+    if (app) {
+      app.ready();
+      app.expand();
     }
-
-    setIsReady(true);
-  }, []);
-
-  const getWebApp = () => {
-    if (isTelegram) {
-      return (window as any).Telegram.WebApp;
-    }
-    return null;
-  };
+    return app;
+  });
+  const [user] = useState(() => webApp?.initDataUnsafe?.user ?? null);
 
   const showMainButton = useCallback((text: string, onClick: () => void) => {
-    const WebApp = getWebApp();
-    if (WebApp) {
-      WebApp.MainButton.setText(text);
-      WebApp.MainButton.onClick(onClick);
-      WebApp.MainButton.show();
+    if (webApp) {
+      webApp.MainButton.setText(text);
+      webApp.MainButton.onClick(onClick);
+      webApp.MainButton.show();
     }
-  }, [isTelegram]);
+  }, [webApp]);
 
   const hideMainButton = useCallback(() => {
-    const WebApp = getWebApp();
-    if (WebApp) {
-      WebApp.MainButton.hide();
-    }
-  }, [isTelegram]);
+    webApp?.MainButton.hide();
+  }, [webApp]);
 
   const showBackButton = useCallback((onClick: () => void) => {
-    const WebApp = getWebApp();
-    if (WebApp) {
-      WebApp.BackButton.onClick(onClick);
-      WebApp.BackButton.show();
+    if (webApp) {
+      webApp.BackButton.onClick(onClick);
+      webApp.BackButton.show();
     }
-  }, [isTelegram]);
+  }, [webApp]);
 
   const hideBackButton = useCallback(() => {
-    const WebApp = getWebApp();
-    if (WebApp) {
-      WebApp.BackButton.hide();
-    }
-  }, [isTelegram]);
+    webApp?.BackButton.hide();
+  }, [webApp]);
 
-  const webApp = getWebApp();
+  const hapticFeedback = useMemo(
+    () => webApp?.HapticFeedback || mockHapticFeedback,
+    [webApp]
+  );
 
   return {
     webApp,
     user,
-    isReady,
-    isTelegram,
+    isReady: true,
+    isTelegram: !!webApp,
     colorScheme: webApp?.colorScheme || "light",
     themeParams: webApp?.themeParams || {},
     showMainButton,
     hideMainButton,
     showBackButton,
     hideBackButton,
-    hapticFeedback: webApp?.HapticFeedback || mockHapticFeedback,
+    hapticFeedback,
     close: () => webApp?.close?.(),
     expand: () => webApp?.expand?.(),
   };

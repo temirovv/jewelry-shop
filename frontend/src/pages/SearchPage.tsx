@@ -15,7 +15,7 @@ import { BottomNav } from "../components/BottomNav";
 import { CartSheet } from "../components/CartSheet";
 import { useCartStore } from "../stores/cartStore";
 import { useTelegram } from "../hooks/useTelegram";
-import { toast } from "../components/Toast";
+import { toast } from "../stores/toastStore";
 import { getProducts, getCategories, type ProductFilters } from "../lib/api/products";
 import type { Product, Category } from "../types";
 
