@@ -32,6 +32,11 @@ jobs:
           ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} \
             "cd ${{ secrets.STAGING_PROJECT_PATH }} && ./scripts/deploy.sh deploy staging"
 
+      - name: Healthcheck
+        run: |
+          ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} \
+            "cd ${{ secrets.STAGING_PROJECT_PATH }} && chmod +x scripts/healthcheck.sh && ./scripts/healthcheck.sh staging"
+
       - name: Notify success
         if: success()
         run: |

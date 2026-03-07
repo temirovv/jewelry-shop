@@ -208,10 +208,10 @@ cmd_deploy() {
     docker compose -f "$COMPOSE_FILE" up -d --build
 
     log "Servislar tayyor bo'lishini kutish..."
-    sleep 15
+    sleep 30
 
     log "Eski imagelarni tozalash..."
-    docker image prune -f
+    docker image prune -af
 
     # Server Nginx yangilash (agar mavjud bo'lsa)
     if command -v nginx &>/dev/null; then

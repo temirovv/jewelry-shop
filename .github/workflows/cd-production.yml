@@ -37,6 +37,11 @@ jobs:
           ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }} \
             "cd ${{ secrets.PROD_PROJECT_PATH }} && ./scripts/deploy.sh deploy"
 
+      - name: Healthcheck
+        run: |
+          ssh ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }} \
+            "cd ${{ secrets.PROD_PROJECT_PATH }} && chmod +x scripts/healthcheck.sh && ./scripts/healthcheck.sh production"
+
       - name: Notify success
         if: success()
         run: |

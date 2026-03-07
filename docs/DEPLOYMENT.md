@@ -227,19 +227,37 @@ cat ~/.ssh/github_actions   # GitHub Secret ga nusxalang
 
 ### B) GitHub → Settings → Secrets → Actions
 
+**Production secrets:**
+
 | Secret                       | Qiymat                          |
 |------------------------------|---------------------------------|
-| `PROD_SSH_HOST`              | Server IP manzili               |
+| `PROD_SSH_HOST`              | Production server IP manzili    |
 | `PROD_SSH_USER`              | root (yoki deploy user)         |
-| `PROD_SSH_KEY`               | `~/.ssh/github_actions` private |
+| `PROD_SSH_KEY`               | `~/.ssh/github_actions` private key |
 | `PROD_PROJECT_PATH`          | `/var/www/jewelry-shop`         |
-| `TELEGRAM_DEPLOY_BOT_TOKEN`  | Bot token                       |
-| `TELEGRAM_DEPLOY_CHAT_ID`    | Sizning Telegram ID             |
+
+**Staging secrets:**
+
+| Secret                       | Qiymat                          |
+|------------------------------|---------------------------------|
+| `STAGING_SSH_HOST`           | Staging server IP manzili       |
+| `STAGING_SSH_USER`           | root (yoki deploy user)         |
+| `STAGING_SSH_KEY`            | Staging server SSH private key  |
+| `STAGING_PROJECT_PATH`       | `/var/www/jewelry-shop`         |
+
+**Umumiy (ikkala muhit uchun):**
+
+| Secret                       | Qiymat                          |
+|------------------------------|---------------------------------|
+| `TELEGRAM_DEPLOY_BOT_TOKEN`  | Deploy xabar yuboradigan bot token |
+| `TELEGRAM_DEPLOY_CHAT_ID`    | Xabar yuboriladigan chat/user ID   |
+
+> **GitHub Environments:** GitHub repo → Settings → Environments da `staging` va `production` nomli environmentlar yarating. Production uchun "Required reviewers" qo'shish tavsiya etiladi (manual approval).
 
 ### Natija:
-- `main` ga push → avtomatik production deploy
-- `develop` ga push → avtomatik staging deploy
-- Har bir deploy Telegram'ga xabar yuboradi
+- `main` ga push → avtomatik production deploy (backup → deploy → healthcheck)
+- `develop` ga push → avtomatik staging deploy (deploy → healthcheck)
+- Har bir deploy Telegram'ga xabar yuboradi (muvaffaqiyat yoki xato)
 
 ---
 
