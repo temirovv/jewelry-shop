@@ -10,6 +10,7 @@ import { FavoritesPage } from "./pages/FavoritesPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { useTelegram } from "./hooks/useTelegram";
 import { useCartStore } from "./stores/cartStore";
+import { useUserStore } from "./stores/userStore";
 import { ToastContainer } from "./components/Toast";
 import { springs } from "./lib/animations";
 import "./index.css";
@@ -90,6 +91,7 @@ function AnimatedRoutes() {
 function AppContent() {
   const { colorScheme, themeParams, isReady } = useTelegram();
   const syncWithBackend = useCartStore((state) => state.syncWithBackend);
+  const fetchProfile = useUserStore((state) => state.fetchProfile);
 
   useEffect(() => {
     if (colorScheme === "dark") {
@@ -99,12 +101,13 @@ function AppContent() {
     }
   }, [colorScheme]);
 
-  // Ilova yuklanganda savatni backend bilan sinxronlash
+  // Ilova yuklanganda savatni va profil ma'lumotlarini backend bilan sinxronlash
   useEffect(() => {
     if (isReady) {
       syncWithBackend();
+      fetchProfile();
     }
-  }, [isReady, syncWithBackend]);
+  }, [isReady, syncWithBackend, fetchProfile]);
 
   useEffect(() => {
     if (themeParams) {

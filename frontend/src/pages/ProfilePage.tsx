@@ -13,6 +13,10 @@ import {
   Truck,
   XCircle,
   ShoppingBag,
+  Phone,
+  Globe,
+  Save,
+  Loader2,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
@@ -20,6 +24,7 @@ import { Skeleton } from "../components/ui/skeleton";
 import { BottomNav } from "../components/BottomNav";
 import { CartSheet } from "../components/CartSheet";
 import { useTelegram } from "../hooks/useTelegram";
+import { useUserStore } from "../stores/userStore";
 import { getOrders } from "../lib/api/orders";
 import { formatPrice } from "../lib/utils";
 import type { Order, OrderStatus } from "../types";
@@ -36,6 +41,11 @@ const STATUS_CONFIG: Record<
   cancelled: { label: "Bekor qilindi", icon: XCircle, color: "text-red-500" },
 };
 
+const LANGUAGE_LABELS: Record<string, string> = {
+  uz: "O'zbekcha",
+  ru: "Русский",
+};
+
 export function ProfilePage() {
   const navigate = useNavigate();
   const [cartOpen, setCartOpen] = useState(false);
@@ -45,21 +55,64 @@ export function ProfilePage() {
   const [showProfile, setShowProfile] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
 
+  const [phoneInput, setPhoneInput] = useState("");
+  const [langInput, setLangInput] = useState<"uz" | "ru">("uz");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
   const { user, hapticFeedback, close: closeTelegram } = useTelegram();
+  const { profile, fetchProfile, saveProfile } = useUserStore();
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getOrders();
-        setOrders(data);
-      } catch (err) {
-        console.error(err);
+        // Profil store'da bo'lmasa olish
+        if (!profile) {
+          await fetchProfile();
+        }
+        const ordersData = await getOrders();
+        setOrders(ordersData);
+      } catch {
+        // silent
       } finally {
         setIsLoading(false);
       }
     };
-    fetchOrders();
+    fetchData();
   }, []);
+
+  // Store'dagi profil o'zgarganda inputlarni yangilash
+  useEffect(() => {
+    if (profile) {
+      setPhoneInput(profile.phone || "");
+      setLangInput(profile.language || "uz");
+    }
+  }, [profile]);
+
+  const displayName = profile?.first_name || user?.first_name || "Mehmon";
+  const displayLastName = profile?.last_name || user?.last_name || "";
+  const displayUsername = profile?.username || user?.username;
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    setSaveSuccess(false);
+    try {
+      await saveProfile({
+        phone: phoneInput,
+        language: langInput,
+      });
+      setSaveSuccess(true);
+      hapticFeedback?.notificationOccurred?.("success");
+      setTimeout(() => setSaveSuccess(false), 2000);
+    } catch {
+      hapticFeedback?.notificationOccurred?.("error");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const hasChanges =
+    phoneInput !== (profile?.phone || "") || langInput !== (profile?.language || "uz");
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("uz-UZ", {
@@ -75,14 +128,14 @@ export function ProfilePage() {
       <div className="bg-gradient-to-br from-primary/10 to-primary/5 px-4 pt-8 pb-6">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-            {user?.first_name?.[0] || "?"}
+            {displayName[0] || "?"}
           </div>
           <div>
             <h1 className="text-xl font-bold">
-              {user?.first_name || "Mehmon"} {user?.last_name || ""}
+              {displayName} {displayLastName}
             </h1>
-            {user?.username && (
-              <p className="text-muted-foreground">@{user.username}</p>
+            {displayUsername && (
+              <p className="text-muted-foreground">@{displayUsername}</p>
             )}
           </div>
         </div>
@@ -255,21 +308,77 @@ export function ProfilePage() {
                   exit={{ height: 0, opacity: 0 }}
                   className="overflow-hidden"
                 >
-                  <div className="bg-muted/30 rounded-xl p-4 space-y-3">
+                  <div className="bg-muted/30 rounded-xl p-4 space-y-4">
+                    {/* Ism (read-only, Telegram'dan) */}
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Ism</p>
-                      <p className="font-medium">{user?.first_name || "—"} {user?.last_name || ""}</p>
+                      <p className="font-medium">{displayName} {displayLastName}</p>
                     </div>
-                    {user?.username && (
+                    {displayUsername && (
                       <div>
                         <p className="text-xs text-muted-foreground mb-1">Username</p>
-                        <p className="font-medium">@{user.username}</p>
+                        <p className="font-medium">@{displayUsername}</p>
                       </div>
                     )}
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Telegram ID</p>
-                      <p className="font-medium font-mono">{user?.id || "—"}</p>
+                      <p className="font-medium font-mono">{profile?.telegram_id || user?.id || "—"}</p>
                     </div>
+
+                    {/* Telefon raqam (editable) */}
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                        <Phone className="w-3 h-3" />
+                        Telefon raqam
+                      </label>
+                      <input
+                        type="tel"
+                        value={phoneInput}
+                        onChange={(e) => setPhoneInput(e.target.value)}
+                        placeholder="+998 90 123 45 67"
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
+
+                    {/* Til (editable) */}
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                        <Globe className="w-3 h-3" />
+                        Til
+                      </label>
+                      <div className="flex gap-2">
+                        {(["uz", "ru"] as const).map((lang) => (
+                          <button
+                            key={lang}
+                            onClick={() => setLangInput(lang)}
+                            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                              langInput === lang
+                                ? "bg-primary text-primary-foreground"
+                                : "bg-background border border-border hover:bg-muted"
+                            }`}
+                          >
+                            {LANGUAGE_LABELS[lang]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Saqlash */}
+                    <Button
+                      onClick={handleSaveProfile}
+                      disabled={!hasChanges || isSaving}
+                      className="w-full gold-gradient"
+                      size="sm"
+                    >
+                      {isSaving ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : saveSuccess ? (
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                      ) : (
+                        <Save className="w-4 h-4 mr-2" />
+                      )}
+                      {isSaving ? "Saqlanmoqda..." : saveSuccess ? "Saqlandi!" : "Saqlash"}
+                    </Button>
                   </div>
                 </motion.div>
               )}
