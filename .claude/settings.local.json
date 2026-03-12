@@ -31,7 +31,14 @@
       "Bash(backend/venv/Scripts/python.exe manage.py:*)",
       "Bash(C:/Users/ASUS/Documents/MyPros/jewelry-shop/backend/venv/Scripts/python.exe:*)",
       "Bash(C:/Users/ASUS/Documents/MyPros/jewelry-shop/bot/venv/Scripts/python.exe:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(head:*)",
+      "Bash(cd /c/Users/ASUS/Documents/MyPros/jewelry-shop/frontend && npm run lint 2>&1)",
+      "Bash(cd /c/Users/ASUS/Documents/MyPros/jewelry-shop/backend && pip install ruff -q 2>&1 && ruff check . --exclude=migrations,__pycache__ 2>&1)",
+      "Bash(cd /c/Users/ASUS/Documents/MyPros/jewelry-shop/backend && ruff check . --exclude=migrations,__pycache__ --fix 2>&1)",
+      "Bash(cd /c/Users/ASUS/Documents/MyPros/jewelry-shop/backend && ruff check . --exclude=migrations,__pycache__ 2>&1)",
+      "Bash(cd /c/Users/ASUS/Documents/MyPros/jewelry-shop/frontend && npx tsc --noEmit 2>&1)",
+      "Bash(cd:*)"
     ],
     "deny": [],
     "ask": []
