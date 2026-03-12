@@ -65,7 +65,7 @@ interface UseTelegramReturn {
 const getTelegramWebApp = (): TelegramWebApp | null => {
   try {
     const tg = (window as unknown as { Telegram?: { WebApp?: TelegramWebApp } }).Telegram;
-    if (tg?.WebApp?.initData) {
+    if (tg?.WebApp) {
       return tg.WebApp;
     }
   } catch {
