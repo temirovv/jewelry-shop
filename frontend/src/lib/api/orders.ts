@@ -19,8 +19,9 @@ export async function createOrder(data: CreateOrderData): Promise<Order> {
 }
 
 export async function getOrders(): Promise<Order[]> {
-  const response = await apiClient.get<Order[]>("/orders/");
-  return response.data;
+  const response = await apiClient.get("/orders/");
+  const data = response.data;
+  return Array.isArray(data) ? data : data.results || [];
 }
 
 export async function getOrder(id: number): Promise<Order> {
