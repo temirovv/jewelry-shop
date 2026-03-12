@@ -127,9 +127,17 @@ export function ProfilePage() {
       {/* Profile Header */}
       <div className="bg-gradient-to-br from-primary/10 to-primary/5 px-4 pt-8 pb-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-            {displayName[0] || "?"}
-          </div>
+          {user?.photo_url ? (
+            <img
+              src={user.photo_url}
+              alt={displayName}
+              className="w-16 h-16 rounded-full object-cover shadow-lg"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full gold-gradient flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+              {displayName[0] || "?"}
+            </div>
+          )}
           <div>
             <h1 className="text-xl font-bold">
               {displayName} {displayLastName}
