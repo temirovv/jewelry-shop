@@ -15,14 +15,13 @@ import { ToastContainer } from "./components/Toast";
 import { springs } from "./lib/animations";
 import "./index.css";
 
-// Page wrapper with animation - faster, no exit delay
+// Page wrapper - minimal transition
 function PageWrapper({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.15, ease: "easeOut" }}
+      transition={{ duration: 0.15 }}
     >
       {children}
     </motion.div>
@@ -33,7 +32,7 @@ function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="popLayout" initial={false}>
+    <AnimatePresence mode="wait" initial={false}>
       <Routes location={location} key={location.pathname}>
         <Route
           path="/"

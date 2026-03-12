@@ -1,12 +1,10 @@
 import { memo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Heart, ShoppingBag, Eye, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { Heart, ShoppingBag, Sparkles } from "lucide-react";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 import { formatPrice } from "../lib/utils";
-import { springs, easings } from "../lib/animations";
 import { useFavoritesStore } from "../stores/favoritesStore";
 import type { Product } from "../types";
 
@@ -23,10 +21,8 @@ export const ProductCard = memo(function ProductCard({
   index = 0,
   onPress,
   onAddToCart,
-  onQuickView,
 }: ProductCardProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
 
   const { toggleItem, isFavorite } = useFavoritesStore();
   const isLiked = isFavorite(product.id);
@@ -46,58 +42,33 @@ export const ProductCard = memo(function ProductCard({
     onAddToCart?.(product);
   };
 
-  const handleQuickView = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onQuickView?.(product);
-  };
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{
-        delay: index * 0.04,
-        ...springs.smooth,
-      }}
-      whileHover={{ y: -4 }}
-      whileTap={{ scale: 0.98 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.03, duration: 0.25, ease: "easeOut" }}
     >
       <Card
-        className="overflow-hidden cursor-pointer group border-0 shadow-sm hover:shadow-xl transition-shadow duration-500 bg-card/80 backdrop-blur-sm"
+        className="overflow-hidden cursor-pointer group border-0 shadow-sm active:scale-[0.98] transition-transform duration-150 bg-card/80"
         onClick={() => onPress?.(product)}
       >
         {/* Image Container */}
         <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-muted/50 to-muted">
           {/* Skeleton while loading */}
-          <AnimatePresence>
-            {!imageLoaded && mainImage?.image && (
-              <motion.div
-                exit={{ opacity: 0 }}
-                className="absolute inset-0"
-              >
-                <Skeleton className="w-full h-full" />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {!imageLoaded && mainImage?.image && (
+            <div className="absolute inset-0">
+              <Skeleton className="w-full h-full" />
+            </div>
+          )}
 
           {/* Product Image */}
           {mainImage?.image ? (
-            <motion.img
+            <img
               src={mainImage.image}
               alt={product.name}
-              className="w-full h-full object-cover"
-              initial={{ opacity: 0, scale: 1.1 }}
-              animate={{
-                opacity: imageLoaded ? 1 : 0,
-                scale: isHovered ? 1.06 : 1,
-              }}
-              transition={{
-                opacity: { duration: 0.4 },
-                scale: { duration: 0.5, ease: easings.luxury },
-              }}
+              className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
               onLoad={() => setImageLoaded(true)}
+              loading="lazy"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/20 dark:to-amber-800/20">
@@ -105,174 +76,87 @@ export const ProductCard = memo(function ProductCard({
             </div>
           )}
 
-          {/* Gradient Overlay */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isHovered ? 1 : 0 }}
-            transition={{ duration: 0.3 }}
-          />
-
           {/* Badges */}
           <div className="absolute top-2.5 left-2.5 flex flex-col gap-1.5">
             {discount > 0 && (
-              <motion.div
-                initial={{ opacity: 0, x: -10, scale: 0.8 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                transition={{ delay: 0.1, ...springs.bouncy }}
-              >
-                <Badge variant="sale" className="font-bold shadow-lg">
-                  -{discount}%
-                </Badge>
-              </motion.div>
+              <Badge variant="sale" className="font-bold shadow-lg">
+                -{discount}%
+              </Badge>
             )}
             {product.is_featured && (
-              <motion.div
-                initial={{ opacity: 0, x: -10, scale: 0.8 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                transition={{ delay: 0.15, ...springs.bouncy }}
-              >
-                <Badge variant="gold" className="shadow-lg">
-                  <Sparkles className="w-3 h-3 mr-1" />
-                  Hit
-                </Badge>
-              </motion.div>
+              <Badge variant="gold" className="shadow-lg">
+                <Sparkles className="w-3 h-3 mr-1" />
+                Hit
+              </Badge>
             )}
           </div>
 
           {/* Favorite Button */}
-          <motion.button
-            className="absolute top-2.5 right-2.5 p-2.5 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md shadow-lg"
+          <button
+            className="absolute top-2.5 right-2.5 p-2.5 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md shadow-lg active:scale-90 transition-transform duration-150"
             onClick={handleLike}
-            whileTap={{ scale: 0.85 }}
-            whileHover={{ scale: 1.1 }}
           >
-            <motion.div
-              animate={isLiked ? {
-                scale: [1, 1.3, 1],
-              } : { scale: 1 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Heart
-                className={`h-4 w-4 transition-colors duration-200 ${
-                  isLiked ? "fill-red-500 text-red-500" : "text-gray-600"
-                }`}
-              />
-            </motion.div>
-          </motion.button>
+            <Heart
+              className={`h-4 w-4 transition-colors duration-200 ${
+                isLiked ? "fill-red-500 text-red-500" : "text-gray-600"
+              }`}
+            />
+          </button>
 
-          {/* Action Buttons — Desktop: hover, Mobile: always visible */}
+          {/* Cart Button (mobile) */}
           {product.in_stock && (
-            <>
-              {/* Desktop hover buttons */}
-              <AnimatePresence>
-                {isHovered && (
-                  <motion.div
-                    className="hidden md:flex absolute bottom-3 left-3 right-3 gap-2"
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    transition={{ ...springs.snappy }}
-                  >
-                    <Button
-                      variant="gold"
-                      size="sm"
-                      className="flex-1 shadow-xl"
-                      onClick={handleAddToCart}
-                    >
-                      <ShoppingBag className="h-4 w-4 mr-1.5" />
-                      Savatga
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="px-3 bg-white/90 backdrop-blur-md shadow-xl"
-                      onClick={handleQuickView}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Mobile always-visible cart button */}
-              <motion.button
-                className="md:hidden absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full gold-gradient flex items-center justify-center shadow-lg active:scale-90 transition-transform"
-                onClick={handleAddToCart}
-                whileTap={{ scale: 0.85 }}
-              >
-                <ShoppingBag className="h-4 w-4 text-white" />
-              </motion.button>
-            </>
+            <button
+              className="absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full gold-gradient flex items-center justify-center shadow-lg active:scale-90 transition-transform duration-150"
+              onClick={handleAddToCart}
+            >
+              <ShoppingBag className="h-4 w-4 text-white" />
+            </button>
           )}
 
           {/* Out of Stock Overlay */}
           {!product.in_stock && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center"
-            >
+            <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
               <Badge variant="secondary" className="text-sm px-4 py-1.5">
                 Sotuvda yo'q
               </Badge>
-            </motion.div>
+            </div>
           )}
         </div>
 
         {/* Content */}
-        <motion.div
-          className="p-3.5"
-          animate={{ y: isHovered ? -2 : 0 }}
-          transition={{ ...springs.snappy }}
-        >
-          {/* Category */}
+        <div className="p-3.5">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">
             {product.category?.name}
           </p>
-
-          {/* Name */}
-          <h3 className="font-medium text-sm leading-tight line-clamp-2 mb-2 group-hover:text-primary transition-colors duration-300">
+          <h3 className="font-medium text-sm leading-tight line-clamp-2 mb-2">
             {product.name}
           </h3>
-
-          {/* Price */}
           <div className="flex items-baseline gap-2 flex-wrap">
-            <motion.span
-              className="font-bold text-base gold-text"
-              animate={{ scale: isHovered ? 1.02 : 1 }}
-              transition={{ ...springs.snappy }}
-            >
+            <span className="font-bold text-base gold-text">
               {formatPrice(Number(product.price))}
-            </motion.span>
+            </span>
             {product.old_price && (
               <span className="text-xs text-muted-foreground line-through">
                 {formatPrice(Number(product.old_price))}
               </span>
             )}
           </div>
-
-          {/* Weight */}
           {product.weight && (
             <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
               <span className="w-1 h-1 rounded-full bg-amber-400" />
               {product.weight} gr • {product.metal_type === "gold" ? "Oltin" : product.metal_type === "silver" ? "Kumush" : "Oq oltin"}
             </p>
           )}
-        </motion.div>
+        </div>
       </Card>
     </motion.div>
   );
 });
 
-// Loading Skeleton with pulse animation
+// Loading Skeleton
 export function ProductCardSkeleton() {
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="space-y-3"
-    >
+    <div className="space-y-3">
       <Skeleton className="aspect-square rounded-xl" />
       <div className="space-y-2 px-1">
         <Skeleton className="h-3 w-16" />
@@ -280,6 +164,6 @@ export function ProductCardSkeleton() {
         <Skeleton className="h-4 w-2/3" />
         <Skeleton className="h-5 w-24" />
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, Search as SearchIcon } from "lucide-react";
 import { Header } from "../components/Header";
 import { HeroBanner } from "../components/HeroBanner";
@@ -16,7 +16,7 @@ import { useCartStore } from "../stores/cartStore";
 import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../stores/toastStore";
 import { getProducts, getCategories, getNewArrivals, getFeaturedProducts } from "../lib/api/products";
-import { scrollRevealVariants } from "../lib/animations";
+// animations import removed for performance
 import type { Product, Category } from "../types";
 
 export function HomePage() {
@@ -149,12 +149,7 @@ export function HomePage() {
       />
 
       {/* New Arrivals Section */}
-      <motion.div
-        variants={scrollRevealVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-      >
+      <div>
         <SectionHeader
           title="Yangi kelganlar"
           subtitle="Eng so'nggi mahsulotlar"
@@ -166,15 +161,10 @@ export function HomePage() {
           onAddToCart={handleAddToCart}
           loading={isNewArrivalsLoading}
         />
-      </motion.div>
+      </div>
 
       {/* Featured Section */}
-      <motion.div
-        variants={scrollRevealVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-      >
+      <div>
         <SectionHeader
           title="Mashhur"
           subtitle="Eng ko'p sotilganlar"
@@ -186,15 +176,10 @@ export function HomePage() {
           onAddToCart={handleAddToCart}
           loading={isFeaturedLoading}
         />
-      </motion.div>
+      </div>
 
       {/* All Products Section */}
-      <motion.div
-        variants={scrollRevealVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-      >
+      <div>
         <div className="flex items-center justify-between px-4 pt-6 pb-3">
           <div>
             <motion.h2
@@ -212,7 +197,7 @@ export function HomePage() {
             {isLoading ? "..." : `${products.length} ta`}
           </span>
         </div>
-      </motion.div>
+      </div>
 
       {/* Products Grid */}
       <div className="px-4">
