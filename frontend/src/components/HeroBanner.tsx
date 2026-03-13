@@ -88,8 +88,7 @@ export const HeroBanner = memo(function HeroBanner({ onExplore }: HeroBannerProp
           }));
           setSlides(formattedBanners);
         }
-      } catch (error) {
-        console.error("Failed to fetch banners:", error);
+      } catch {
         // Keep default slides on error
       } finally {
         setLoading(false);

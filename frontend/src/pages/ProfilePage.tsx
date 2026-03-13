@@ -25,7 +25,7 @@ import { BottomNav } from "../components/BottomNav";
 import { CartSheet } from "../components/CartSheet";
 import { useTelegram } from "../hooks/useTelegram";
 import { useUserStore } from "../stores/userStore";
-import { getOrders } from "../lib/api/orders";
+import { getOrders, getOrdersByUrl } from "../lib/api/orders";
 import { formatPrice } from "../lib/utils";
 import type { Order, OrderStatus } from "../types";
 
@@ -51,6 +51,8 @@ export function ProfilePage() {
   const [cartOpen, setCartOpen] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [nextOrdersPage, setNextOrdersPage] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<"orders" | "settings">("orders");
   const [showProfile, setShowProfile] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -69,8 +71,9 @@ export function ProfilePage() {
         if (!profile) {
           await fetchProfile();
         }
-        const ordersData = await getOrders();
-        setOrders(ordersData);
+        const ordersResult = await getOrders();
+        setOrders(ordersResult.orders);
+        setNextOrdersPage(ordersResult.next);
       } catch {
         // silent
       } finally {
@@ -108,6 +111,20 @@ export function ProfilePage() {
       hapticFeedback?.notificationOccurred?.("error");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const loadMoreOrders = async () => {
+    if (!nextOrdersPage || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const result = await getOrdersByUrl(nextOrdersPage);
+      setOrders((prev) => [...prev, ...result.orders]);
+      setNextOrdersPage(result.next);
+    } catch {
+      // silent
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -286,6 +303,22 @@ export function ProfilePage() {
                     </motion.div>
                   );
                 })}
+
+                {nextOrdersPage && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      variant="outline"
+                      onClick={loadMoreOrders}
+                      disabled={isLoadingMore}
+                      size="sm"
+                    >
+                      {isLoadingMore ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : null}
+                      {isLoadingMore ? "Yuklanmoqda..." : "Ko'proq ko'rsatish"}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </motion.div>

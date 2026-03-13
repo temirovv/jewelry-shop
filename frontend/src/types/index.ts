@@ -19,6 +19,7 @@ export interface Product {
   metal_type: MetalType;
   weight: number;
   size?: string;
+  proba?: string;
   in_stock: boolean;
   is_featured: boolean;
   created_at: string;

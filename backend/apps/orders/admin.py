@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Count
 from django.utils.html import format_html
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.contrib.import_export.forms import ExportForm
@@ -194,9 +195,14 @@ class OrderAdmin(ExportMixin, ModelAdmin):
             f"{queryset.count()} ta buyurtma bekor qilindi.",
         )
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("user").annotate(
+            items_count_annotated=Count("items")
+        )
+
     @display(description="Mahsulotlar")
     def display_items_count(self, obj):
-        count = obj.items.count()
+        count = getattr(obj, "items_count_annotated", obj.items.count())
         return format_html(
             '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">{} ta</span>',
             count,

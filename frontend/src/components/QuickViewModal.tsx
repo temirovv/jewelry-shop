@@ -4,6 +4,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { X, ShoppingBag, Heart, Minus, Plus, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { useFavoritesStore } from "../stores/favoritesStore";
 import { formatPrice } from "../lib/utils";
 import type { Product } from "../types";
 
@@ -24,8 +25,9 @@ export const QuickViewModal = memo(function QuickViewModal({
 }: QuickViewModalProps) {
   const [quantity, setQuantity] = useState(1);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
   const [lastProductId, setLastProductId] = useState<number | null>(null);
+  const { toggleItem, isFavorite } = useFavoritesStore();
+  const isLiked = product ? isFavorite(product.id) : false;
 
   // Reset state when product changes or modal opens
   if (open && product && product.id !== lastProductId) {
@@ -148,7 +150,7 @@ export const QuickViewModal = memo(function QuickViewModal({
                 <motion.button
                   className="absolute top-3 right-3 p-2.5 rounded-full bg-white/90 backdrop-blur-md shadow-lg"
                   whileTap={{ scale: 0.9 }}
-                  onClick={() => setIsLiked(!isLiked)}
+                  onClick={() => product && toggleItem(product)}
                 >
                   <Heart
                     className={`w-5 h-5 ${
@@ -203,8 +205,10 @@ export const QuickViewModal = memo(function QuickViewModal({
                   <div className="p-3 rounded-xl bg-muted/50">
                     <p className="text-xs text-muted-foreground mb-0.5">Metal</p>
                     <p className="font-medium">
-                      {product.metal_type === "gold" ? "Oltin 585" :
-                       product.metal_type === "silver" ? "Kumush 925" : "Oq oltin 750"}
+                      {product.metal_type === "gold" ? "Oltin" :
+                       product.metal_type === "silver" ? "Kumush" :
+                       product.metal_type === "white_gold" ? "Oq oltin" : "Platina"}
+                      {product.proba ? ` ${product.proba}` : ""}
                     </p>
                   </div>
                   {product.size && (

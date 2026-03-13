@@ -13,15 +13,32 @@ export interface CreateOrderData {
   payment_method: PaymentMethod;
 }
 
+export interface OrdersResponse {
+  orders: Order[];
+  next: string | null;
+}
+
 export async function createOrder(data: CreateOrderData): Promise<Order> {
   const response = await apiClient.post<Order>("/orders/", data);
   return response.data;
 }
 
-export async function getOrders(): Promise<Order[]> {
+export async function getOrders(): Promise<OrdersResponse> {
   const response = await apiClient.get("/orders/");
   const data = response.data;
-  return Array.isArray(data) ? data : data.results || [];
+  if (Array.isArray(data)) {
+    return { orders: data, next: null };
+  }
+  return { orders: data.results || [], next: data.next || null };
+}
+
+export async function getOrdersByUrl(url: string): Promise<OrdersResponse> {
+  const response = await apiClient.get(url);
+  const data = response.data;
+  if (Array.isArray(data)) {
+    return { orders: data, next: null };
+  }
+  return { orders: data.results || [], next: data.next || null };
 }
 
 export async function getOrder(id: number): Promise<Order> {

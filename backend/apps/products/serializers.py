@@ -51,6 +51,7 @@ class ProductListSerializer(serializers.ModelSerializer):
             "category",
             "metal_type",
             "weight",
+            "proba",
             "in_stock",
             "is_featured",
             "discount_percent",

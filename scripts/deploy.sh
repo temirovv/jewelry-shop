@@ -211,7 +211,7 @@ cmd_deploy() {
     sleep 30
 
     log "Eski imagelarni tozalash..."
-    docker image prune -af
+    docker image prune -f
 
     # Server Nginx yangilash (agar mavjud bo'lsa)
     if command -v nginx &>/dev/null; then

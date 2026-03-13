@@ -38,7 +38,9 @@
       "Bash(cd /c/Users/ASUS/Documents/MyPros/jewelry-shop/backend && ruff check . --exclude=migrations,__pycache__ --fix 2>&1)",
       "Bash(cd /c/Users/ASUS/Documents/MyPros/jewelry-shop/backend && ruff check . --exclude=migrations,__pycache__ 2>&1)",
       "Bash(cd /c/Users/ASUS/Documents/MyPros/jewelry-shop/frontend && npx tsc --noEmit 2>&1)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(git:*)",
+      "Bash(cd /c/Users/ASUS/Documents/MyPros/jewelry-shop/backend && python manage.py check 2>&1)"
     ],
     "deny": [],
     "ask": []

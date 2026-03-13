@@ -1,5 +1,6 @@
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 
@@ -18,6 +19,7 @@ class BannerViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Banner.objects.filter(is_active=True)
     serializer_class = BannerSerializer
+    permission_classes = [AllowAny]
     pagination_class = None
 
 
@@ -26,6 +28,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
     queryset = Category.objects.filter(is_active=True)
     serializer_class = CategorySerializer
+    permission_classes = [AllowAny]
     pagination_class = None
 
 
@@ -33,6 +36,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     """Mahsulotlar API"""
 
     queryset = Product.objects.filter(is_active=True).prefetch_related("images")
+    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ProductFilter
     search_fields = ["name", "description"]

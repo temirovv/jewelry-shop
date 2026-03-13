@@ -22,13 +22,14 @@ import { springs, staggerContainerVariants, staggerItemVariants } from "../lib/a
 interface SidebarMenuProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onCartOpen?: () => void;
 }
 
 const menuItems = [
   { icon: Home, label: "Bosh sahifa", path: "/" },
   { icon: Search, label: "Qidirish", path: "/search" },
   { icon: Heart, label: "Sevimlilar", path: "/favorites", badge: "favorites" },
-  { icon: ShoppingBag, label: "Savat", path: "/cart", badge: "cart" },
+  { icon: ShoppingBag, label: "Savat", path: "__cart__", badge: "cart" },
   { icon: Package, label: "Buyurtmalarim", path: "/profile" },
   { icon: User, label: "Profil", path: "/profile" },
 ];
@@ -41,6 +42,7 @@ const bottomItems = [
 export const SidebarMenu = memo(function SidebarMenu({
   open,
   onOpenChange,
+  onCartOpen,
 }: SidebarMenuProps) {
   const navigate = useNavigate();
   const { user, hapticFeedback } = useTelegram();
@@ -50,7 +52,11 @@ export const SidebarMenu = memo(function SidebarMenu({
   const handleNavigate = (path: string) => {
     hapticFeedback?.impactOccurred?.("light");
     onOpenChange(false);
-    setTimeout(() => navigate(path), 150);
+    if (path === "__cart__") {
+      setTimeout(() => onCartOpen?.(), 150);
+    } else {
+      setTimeout(() => navigate(path), 150);
+    }
   };
 
   const handleAction = (action: string) => {

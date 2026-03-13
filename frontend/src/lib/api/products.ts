@@ -29,16 +29,21 @@ export async function getProducts(
   return response.data;
 }
 
+export async function getProductsByUrl(
+  url: string
+): Promise<PaginatedResponse<Product>> {
+  const response = await apiClient.get<PaginatedResponse<Product>>(url);
+  return response.data;
+}
+
 export async function getProduct(id: number): Promise<Product> {
   const response = await apiClient.get<Product>(`/products/${id}/`);
   return response.data;
 }
 
 export async function getFeaturedProducts(): Promise<Product[]> {
-  const response = await apiClient.get<PaginatedResponse<Product>>(
-    "/products/?is_featured=true"
-  );
-  return response.data.results;
+  const response = await apiClient.get<Product[]>("/products/featured/");
+  return response.data;
 }
 
 export async function getCategories(): Promise<Category[]> {

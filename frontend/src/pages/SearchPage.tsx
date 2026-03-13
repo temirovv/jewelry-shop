@@ -6,6 +6,7 @@ import {
   X,
   SlidersHorizontal,
   ArrowUpDown,
+  Loader2,
 } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
@@ -16,7 +17,7 @@ import { CartSheet } from "../components/CartSheet";
 import { useCartStore } from "../stores/cartStore";
 import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../stores/toastStore";
-import { getProducts, getCategories, type ProductFilters } from "../lib/api/products";
+import { getProducts, getProductsByUrl, getCategories, type ProductFilters } from "../lib/api/products";
 import type { Product, Category } from "../types";
 
 const SORT_OPTIONS = [
@@ -42,6 +43,8 @@ export function SearchPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [nextPage, setNextPage] = useState<string | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
 
@@ -59,12 +62,13 @@ export function SearchPage() {
 
   // Fetch categories
   useEffect(() => {
-    getCategories().then(setCategories).catch(console.error);
+    getCategories().then(setCategories).catch(() => {});
   }, []);
 
   // Search products
   const searchProducts = useCallback(async () => {
     setIsLoading(true);
+    setNextPage(null);
     try {
       const filters: ProductFilters = {};
       if (query.trim()) filters.search = query.trim();
@@ -74,12 +78,27 @@ export function SearchPage() {
 
       const data = await getProducts(filters);
       setProducts(data.results);
-    } catch (err) {
-      console.error(err);
+      setNextPage(data.next);
+    } catch {
+      // silent
     } finally {
       setIsLoading(false);
     }
   }, [query, selectedCategory, selectedMetal, sortBy]);
+
+  const loadMoreProducts = useCallback(async () => {
+    if (!nextPage || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const data = await getProductsByUrl(nextPage);
+      setProducts((prev) => [...prev, ...data.results]);
+      setNextPage(data.next);
+    } catch {
+      // silent
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [nextPage, isLoadingMore]);
 
   // Debounced search
   useEffect(() => {
@@ -335,6 +354,23 @@ export function SearchPage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Ko'proq ko'rsatish */}
+        {nextPage && !isLoading && (
+          <div className="flex justify-center mt-6">
+            <Button
+              variant="outline"
+              onClick={loadMoreProducts}
+              disabled={isLoadingMore}
+              className="px-8"
+            >
+              {isLoadingMore ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : null}
+              {isLoadingMore ? "Yuklanmoqda..." : "Ko'proq ko'rsatish"}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Bottom Navigation */}

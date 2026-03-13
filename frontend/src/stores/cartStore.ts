@@ -24,12 +24,13 @@ interface CartState {
   getItemsCount: () => number;
 }
 
-// Backend bilan sinxronizatsiya qilish (xatolikni yutib yuboradi)
+// Backend bilan sinxronizatsiya: action bajargandan so'ng to'liq cart qayta yuklash
 async function syncToBackend(
-  action: () => Promise<{ items?: CartItem[] }>
+  action: () => Promise<unknown>
 ): Promise<CartItem[] | null> {
   try {
-    const cart = await action();
+    await action();
+    const cart = await cartApi.getCart();
     return cart.items || [];
   } catch {
     return null;

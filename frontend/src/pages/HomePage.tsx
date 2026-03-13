@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Search as SearchIcon } from "lucide-react";
+import { AlertCircle, Search as SearchIcon, Loader2 } from "lucide-react";
+import { Button } from "../components/ui/button";
 import { Header } from "../components/Header";
 import { HeroBanner } from "../components/HeroBanner";
 import { CategorySlider } from "../components/CategorySlider";
@@ -15,7 +16,7 @@ import { SidebarMenu } from "../components/SidebarMenu";
 import { useCartStore } from "../stores/cartStore";
 import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../stores/toastStore";
-import { getProducts, getCategories, getNewArrivals, getFeaturedProducts } from "../lib/api/products";
+import { getProducts, getProductsByUrl, getCategories, getNewArrivals, getFeaturedProducts } from "../lib/api/products";
 // animations import removed for performance
 import type { Product, Category } from "../types";
 
@@ -25,8 +26,10 @@ export function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isCategoriesLoading, setIsCategoriesLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [nextPage, setNextPage] = useState<string | null>(null);
 
   // New sections
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
@@ -54,8 +57,8 @@ export function HomePage() {
       try {
         const data = await getCategories();
         setCategories(data);
-      } catch (error) {
-        console.error("Categories fetch error:", error);
+      } catch {
+        // silent
       } finally {
         setIsCategoriesLoading(false);
       }
@@ -81,13 +84,14 @@ export function HomePage() {
     const fetchProducts = async () => {
       setIsLoading(true);
       setError(null);
+      setNextPage(null);
       try {
         const data = await getProducts(
           selectedCategory ? { category: selectedCategory } : undefined
         );
         setProducts(data.results);
-      } catch (error) {
-        console.error("Products fetch error:", error);
+        setNextPage(data.next);
+      } catch {
         setError("Mahsulotlarni yuklashda xatolik. Qaytadan urinib ko'ring.");
       } finally {
         setIsLoading(false);
@@ -95,6 +99,20 @@ export function HomePage() {
     };
     fetchProducts();
   }, [selectedCategory]);
+
+  const loadMoreProducts = useCallback(async () => {
+    if (!nextPage || isLoadingMore) return;
+    setIsLoadingMore(true);
+    try {
+      const data = await getProductsByUrl(nextPage);
+      setProducts((prev) => [...prev, ...data.results]);
+      setNextPage(data.next);
+    } catch {
+      // silent
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [nextPage, isLoadingMore]);
 
   const handleAddToCart = useCallback((product: Product, quantity: number = 1) => {
     addItem(product, quantity);
@@ -279,6 +297,23 @@ export function HomePage() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Ko'proq ko'rsatish */}
+        {nextPage && !isLoading && (
+          <div className="flex justify-center mt-6">
+            <Button
+              variant="outline"
+              onClick={loadMoreProducts}
+              disabled={isLoadingMore}
+              className="px-8"
+            >
+              {isLoadingMore ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : null}
+              {isLoadingMore ? "Yuklanmoqda..." : "Ko'proq ko'rsatish"}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Bottom Navigation */}
@@ -307,7 +342,7 @@ export function HomePage() {
       />
 
       {/* Sidebar Menu */}
-      <SidebarMenu open={menuOpen} onOpenChange={setMenuOpen} />
+      <SidebarMenu open={menuOpen} onOpenChange={setMenuOpen} onCartOpen={() => setCartOpen(true)} />
     </div>
   );
 }

@@ -25,6 +25,9 @@ class Order(models.Model):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     total = models.DecimalField(max_digits=12, decimal_places=0, default=0)
+    delivery_fee = models.DecimalField(
+        max_digits=12, decimal_places=0, default=0, verbose_name="Yetkazish narxi"
+    )
 
     # To'lov ma'lumotlari
     payment_method = models.CharField(
@@ -51,7 +54,8 @@ class Order(models.Model):
         return f"#{self.id} - {self.user.full_name}"
 
     def calculate_total(self):
-        self.total = sum(item.subtotal for item in self.items.all())
+        items_total = sum(item.subtotal for item in self.items.all())
+        self.total = items_total + self.delivery_fee
         self.save(update_fields=["total"])
 
 
@@ -78,6 +82,6 @@ class OrderItem(models.Model):
         return self.price * self.quantity
 
     def save(self, *args, **kwargs):
-        if not self.price:
+        if self.price is None:
             self.price = self.product.price
         super().save(*args, **kwargs)

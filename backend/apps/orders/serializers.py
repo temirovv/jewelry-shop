@@ -26,6 +26,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "status",
             "status_display",
             "total",
+            "delivery_fee",
             "phone",
             "delivery_address",
             "comment",
@@ -35,7 +36,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "items",
             "created_at",
         ]
-        read_only_fields = ["id", "status", "total", "is_paid", "created_at"]
+        read_only_fields = ["id", "status", "total", "delivery_fee", "is_paid", "created_at"]
 
 
 class CreateOrderSerializer(serializers.Serializer):

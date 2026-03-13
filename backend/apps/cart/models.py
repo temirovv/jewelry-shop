@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import F, Sum
 from apps.users.models import TelegramUser
 from apps.products.models import Product
 
@@ -21,11 +22,15 @@ class Cart(models.Model):
 
     @property
     def total(self):
-        return sum(item.subtotal for item in self.items.all())
+        result = self.items.aggregate(
+            total=Sum(F("product__price") * F("quantity"))
+        )["total"]
+        return result or 0
 
     @property
     def items_count(self):
-        return sum(item.quantity for item in self.items.all())
+        result = self.items.aggregate(total=Sum("quantity"))["total"]
+        return result or 0
 
 
 class CartItem(models.Model):

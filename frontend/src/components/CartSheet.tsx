@@ -26,6 +26,8 @@ export const CartSheet = memo(function CartSheet({
   const { items, updateQuantity, removeItem, getTotal, getItemsCount } = useCartStore();
   const total = getTotal();
   const itemsCount = getItemsCount();
+  const deliveryFee = total >= 500000 ? 0 : 30000;
+  const grandTotal = total + deliveryFee;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -88,12 +90,14 @@ export const CartSheet = memo(function CartSheet({
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Yetkazib berish</span>
-                <span className="text-green-600">Bepul</span>
+                <span className={deliveryFee === 0 ? "text-green-600" : ""}>
+                  {deliveryFee === 0 ? "Bepul" : formatPrice(deliveryFee)}
+                </span>
               </div>
               <div className="h-px bg-border my-2" />
               <div className="flex justify-between items-center">
                 <span className="font-medium">Jami</span>
-                <span className="text-xl font-bold gold-text">{formatPrice(total)}</span>
+                <span className="text-xl font-bold gold-text">{formatPrice(grandTotal)}</span>
               </div>
             </div>
 

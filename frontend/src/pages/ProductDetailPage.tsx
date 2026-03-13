@@ -182,6 +182,7 @@ export function ProductDetailPage() {
   const specs = [
     { icon: Gem, label: "Metall turi", value: metalLabels[product.metal_type] || product.metal_type },
     { icon: Scale, label: "Og'irligi", value: `${product.weight} gr` },
+    ...(product.proba ? [{ icon: Gem, label: "Proba", value: product.proba }] : []),
     ...(product.size ? [{ icon: Ruler, label: "O'lchami", value: product.size }] : []),
     {
       icon: product.in_stock ? CircleCheck : CircleX,

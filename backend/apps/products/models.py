@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, transaction
 from django.utils.text import slugify
 
 
@@ -48,7 +48,7 @@ class Category(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = slugify(self.name)
+            self.slug = slugify(self.name, allow_unicode=True)
         super().save(*args, **kwargs)
 
 
@@ -129,8 +129,9 @@ class ProductImage(models.Model):
         return f"{self.product.name} - Rasm {self.id}"
 
     def save(self, *args, **kwargs):
-        if self.is_main:
-            ProductImage.objects.filter(
-                product=self.product, is_main=True
-            ).update(is_main=False)
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            if self.is_main:
+                ProductImage.objects.filter(
+                    product=self.product, is_main=True
+                ).update(is_main=False)
+            super().save(*args, **kwargs)

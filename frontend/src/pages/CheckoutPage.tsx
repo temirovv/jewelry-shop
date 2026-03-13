@@ -242,7 +242,7 @@ export function CheckoutPage() {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form id="checkout-form" onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-sm font-medium mb-2 flex items-center gap-2">
               <Phone className="w-4 h-4" />
@@ -379,9 +379,9 @@ export function CheckoutPage() {
 
         <Button
           type="submit"
+          form="checkout-form"
           className="w-full h-12 gold-gradient text-white font-medium rounded-xl"
           disabled={isLoading}
-          onClick={handleSubmit}
         >
           {isLoading ? (
             <>

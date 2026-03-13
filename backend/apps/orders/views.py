@@ -1,4 +1,6 @@
 import logging
+from decimal import Decimal
+from django.db import transaction
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 
@@ -8,6 +10,9 @@ from .utils import send_order_notification
 from apps.products.models import Product
 
 logger = logging.getLogger(__name__)
+
+FREE_DELIVERY_THRESHOLD = Decimal("500000")
+DELIVERY_FEE = Decimal("30000")
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -35,35 +40,51 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         data = serializer.validated_data
 
-        # Buyurtma yaratish
-        order = Order.objects.create(
-            user=request.user,
-            phone=data["phone"],
-            delivery_address=data.get("delivery_address", ""),
-            comment=data.get("comment", ""),
-            payment_method=data.get("payment_method", "cash"),
-        )
-
-        # Elementlarni qo'shish va stockni kamaytirish
-        for item_data in data["items"]:
-            product = Product.objects.get(id=item_data["product_id"])
-
-            if not product.in_stock:
-                order.delete()
-                return Response(
-                    {"error": f"'{product.name}' sotuvda yo'q"},
-                    status=status.HTTP_400_BAD_REQUEST,
+        try:
+            with transaction.atomic():
+                # Buyurtma yaratish
+                order = Order.objects.create(
+                    user=request.user,
+                    phone=data["phone"],
+                    delivery_address=data.get("delivery_address", ""),
+                    comment=data.get("comment", ""),
+                    payment_method=data.get("payment_method", "cash"),
                 )
 
-            OrderItem.objects.create(
-                order=order,
-                product=product,
-                quantity=item_data["quantity"],
-                price=product.price,
-                size=item_data.get("size", ""),
-            )
+                # Elementlarni qo'shish
+                items_total = Decimal("0")
+                for item_data in data["items"]:
+                    product = Product.objects.select_for_update().get(
+                        id=item_data["product_id"]
+                    )
 
-        order.calculate_total()
+                    if not product.in_stock:
+                        raise ValueError(f"'{product.name}' sotuvda yo'q")
+
+                    OrderItem.objects.create(
+                        order=order,
+                        product=product,
+                        quantity=item_data["quantity"],
+                        price=product.price,
+                        size=item_data.get("size", ""),
+                    )
+                    items_total += product.price * item_data["quantity"]
+
+                # Yetkazish narxini hisoblash
+                delivery_fee = (
+                    Decimal("0")
+                    if items_total >= FREE_DELIVERY_THRESHOLD
+                    else DELIVERY_FEE
+                )
+                order.delivery_fee = delivery_fee
+                order.total = items_total + delivery_fee
+                order.save(update_fields=["delivery_fee", "total"])
+
+        except ValueError as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # Buyurtmadan keyin foydalanuvchi savatini tozalash
         try:

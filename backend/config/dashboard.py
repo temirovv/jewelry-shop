@@ -1,3 +1,4 @@
+from django.db.models import Count, Sum
 from django.utils import timezone
 from datetime import timedelta
 
@@ -15,14 +16,18 @@ def get_dashboard_callback(request, context):
     # Umumiy statistika
     total_orders = Order.objects.count()
     pending_orders = Order.objects.filter(status="pending").count()
-    total_revenue = sum(
-        o.total for o in Order.objects.filter(status="delivered")
-    ) or 0
-    month_revenue = sum(
-        o.total for o in Order.objects.filter(
+    total_revenue = (
+        Order.objects.filter(status="delivered").aggregate(
+            total=Sum("total")
+        )["total"]
+        or 0
+    )
+    month_revenue = (
+        Order.objects.filter(
             status="delivered", created_at__gte=month_ago
-        )
-    ) or 0
+        ).aggregate(total=Sum("total"))["total"]
+        or 0
+    )
 
     total_users = TelegramUser.objects.filter(is_active=True).count()
     new_users_week = TelegramUser.objects.filter(created_at__gte=week_ago).count()
@@ -35,7 +40,6 @@ def get_dashboard_callback(request, context):
     recent_orders = Order.objects.select_related("user").order_by("-created_at")[:5]
 
     # Top mahsulotlar (buyurtma soni bo'yicha)
-    from django.db.models import Count
     top_products = Product.objects.filter(
         is_active=True,
         orderitem__isnull=False,
