@@ -33,10 +33,16 @@ class OrderSerializer(serializers.ModelSerializer):
             "payment_method",
             "payment_method_display",
             "is_paid",
+            "bts_tracking_code",
+            "delivery_region",
+            "delivery_city",
             "items",
             "created_at",
         ]
-        read_only_fields = ["id", "status", "total", "delivery_fee", "is_paid", "created_at"]
+        read_only_fields = [
+            "id", "status", "total", "delivery_fee", "is_paid",
+            "bts_tracking_code", "created_at",
+        ]
 
 
 class CreateOrderSerializer(serializers.Serializer):
@@ -53,6 +59,8 @@ class CreateOrderSerializer(serializers.Serializer):
         choices=["cash", "transfer"],
         default="cash",
     )
+    delivery_region_id = serializers.IntegerField(required=False, allow_null=True)
+    delivery_city_id = serializers.IntegerField(required=False, allow_null=True)
 
     def validate_items(self, value):
         from apps.products.models import Product

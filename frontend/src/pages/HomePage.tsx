@@ -108,7 +108,7 @@ export function HomePage() {
       setProducts((prev) => [...prev, ...data.results]);
       setNextPage(data.next);
     } catch {
-      // silent
+      toast.error("Mahsulotlarni yuklashda xatolik");
     } finally {
       setIsLoadingMore(false);
     }

@@ -25,6 +25,7 @@ import { BottomNav } from "../components/BottomNav";
 import { CartSheet } from "../components/CartSheet";
 import { useTelegram } from "../hooks/useTelegram";
 import { useUserStore } from "../stores/userStore";
+import { toast } from "../stores/toastStore";
 import { getOrders, getOrdersByUrl } from "../lib/api/orders";
 import { formatPrice } from "../lib/utils";
 import type { Order, OrderStatus } from "../types";
@@ -75,7 +76,7 @@ export function ProfilePage() {
         setOrders(ordersResult.orders);
         setNextOrdersPage(ordersResult.next);
       } catch {
-        // silent
+        toast.error("Ma'lumotlarni yuklashda xatolik");
       } finally {
         setIsLoading(false);
       }
@@ -122,7 +123,7 @@ export function ProfilePage() {
       setOrders((prev) => [...prev, ...result.orders]);
       setNextOrdersPage(result.next);
     } catch {
-      // silent
+      toast.error("Buyurtmalarni yuklashda xatolik");
     } finally {
       setIsLoadingMore(false);
     }
@@ -291,6 +292,16 @@ export function ProfilePage() {
                           </div>
                         )}
                       </div>
+
+                      {order.bts_tracking_code && (
+                        <div className="flex items-center gap-2 mb-2 bg-primary/5 rounded-lg px-3 py-1.5">
+                          <Truck className="w-3.5 h-3.5 text-primary" />
+                          <span className="text-xs text-muted-foreground">Tracking:</span>
+                          <span className="text-xs font-mono font-semibold text-primary">
+                            {order.bts_tracking_code}
+                          </span>
+                        </div>
+                      )}
 
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">

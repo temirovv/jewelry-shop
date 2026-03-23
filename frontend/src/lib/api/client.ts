@@ -36,7 +36,7 @@ apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Unauthorized - Telegram auth muammo
+      console.error("Telegram authentication failed");
     }
     return Promise.reject(error);
   }

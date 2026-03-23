@@ -11,6 +11,8 @@ export interface CreateOrderData {
   delivery_address?: string;
   comment?: string;
   payment_method: PaymentMethod;
+  delivery_region_id?: number;
+  delivery_city_id?: number;
 }
 
 export interface OrdersResponse {

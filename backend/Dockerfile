@@ -14,8 +14,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
-# Create directories
-RUN mkdir -p staticfiles media
+# Create directories and non-root user
+RUN mkdir -p staticfiles media \
+    && addgroup --system appgroup \
+    && adduser --system --ingroup appgroup appuser \
+    && chown -R appuser:appgroup /app
+
+USER appuser
 
 EXPOSE 8000
 

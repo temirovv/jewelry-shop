@@ -38,6 +38,25 @@ class Order(models.Model):
     )
     is_paid = models.BooleanField(default=False, verbose_name="To'langan")
 
+    # BTS yetkazish ma'lumotlari
+    bts_shipment_id = models.CharField(max_length=50, blank=True, null=True)
+    bts_tracking_code = models.CharField(max_length=50, blank=True, null=True)
+    bts_status = models.CharField(max_length=50, blank=True)
+    delivery_region = models.ForeignKey(
+        "delivery.BTSRegion",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Yetkazish viloyati",
+    )
+    delivery_city = models.ForeignKey(
+        "delivery.BTSCity",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Yetkazish shahri",
+    )
+
     phone = models.CharField(max_length=20)
     delivery_address = models.TextField(blank=True)
     comment = models.TextField(blank=True)

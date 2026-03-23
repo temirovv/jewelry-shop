@@ -71,6 +71,7 @@ export interface Order {
   user: User;
   items: OrderItem[];
   total: number;
+  delivery_fee: number;
   status: OrderStatus;
   delivery_address?: string;
   phone: string;
@@ -78,6 +79,9 @@ export interface Order {
   payment_method: PaymentMethod;
   payment_method_display: string;
   is_paid: boolean;
+  bts_tracking_code?: string;
+  delivery_region?: number;
+  delivery_city?: number;
   created_at: string;
 }
 

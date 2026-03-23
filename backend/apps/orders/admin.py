@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import admin
 from django.db.models import Count
 from django.utils.html import format_html
@@ -8,6 +10,9 @@ from import_export import resources
 from import_export.admin import ExportMixin
 from .models import Order, OrderItem
 from .utils import send_status_notification
+from apps.delivery.services import create_bts_shipment, get_bts_tracking
+
+logger = logging.getLogger(__name__)
 
 
 class OrderResource(resources.ModelResource):
@@ -58,14 +63,22 @@ class OrderAdmin(ExportMixin, ModelAdmin):
     list_display_links = ["display_id", "display_user"]
     list_filter = ["status", "payment_method", "is_paid", "created_at"]
     search_fields = ["user__first_name", "user__phone", "phone", "id"]
-    readonly_fields = ["total", "created_at", "updated_at"]
+    readonly_fields = [
+        "total", "created_at", "updated_at",
+        "bts_shipment_id", "bts_tracking_code", "bts_status",
+        "delivery_region", "delivery_city",
+    ]
     inlines = [OrderItemInline]
     ordering = ["-created_at"]
     list_filter_submit = True
     date_hierarchy = "created_at"
     list_per_page = 20
     save_on_top = True
-    actions = ["mark_confirmed", "mark_processing", "mark_shipped", "mark_delivered", "mark_cancelled", "mark_paid", "mark_unpaid"]
+    actions = [
+        "mark_confirmed", "mark_processing", "mark_shipped",
+        "mark_delivered", "mark_cancelled", "mark_paid", "mark_unpaid",
+        "send_to_bts", "refresh_bts_status",
+    ]
 
     fieldsets = (
         ("Buyurtma", {
@@ -78,6 +91,13 @@ class OrderAdmin(ExportMixin, ModelAdmin):
         }),
         ("To'lov", {
             "fields": ("payment_method", "is_paid", "total"),
+            "classes": ["tab"],
+        }),
+        ("BTS Yetkazish", {
+            "fields": (
+                "bts_shipment_id", "bts_tracking_code", "bts_status",
+                "delivery_region", "delivery_city",
+            ),
             "classes": ["tab"],
         }),
         ("Vaqt", {
@@ -156,8 +176,8 @@ class OrderAdmin(ExportMixin, ModelAdmin):
             order.save(update_fields=["status"])
             try:
                 send_status_notification(order, new_status)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Failed to send notification for order #{order.id}: {e}")
         self.message_user(request, message)
 
     @action(description="Tasdiqlash", icon="check_circle")
@@ -195,6 +215,45 @@ class OrderAdmin(ExportMixin, ModelAdmin):
             f"{queryset.count()} ta buyurtma bekor qilindi.",
         )
 
+    @action(description="BTS ga yuborish", icon="local_shipping")
+    def send_to_bts(self, request, queryset):
+        """Tanlangan buyurtmalarni BTS ga yuborish."""
+        sent = 0
+        errors = 0
+        for order in queryset.select_related("user", "delivery_region", "delivery_city"):
+            if order.bts_shipment_id:
+                continue  # Already sent
+            try:
+                result = create_bts_shipment(order)
+                order.bts_shipment_id = result["shipment_id"]
+                order.bts_tracking_code = result["tracking_code"]
+                order.bts_status = "created"
+                order.save(update_fields=["bts_shipment_id", "bts_tracking_code", "bts_status"])
+                sent += 1
+            except Exception as e:
+                errors += 1
+                self.message_user(request, f"Buyurtma #{order.id} xatolik: {e}", level="error")
+        if sent:
+            self.message_user(request, f"{sent} ta buyurtma BTS ga yuborildi.")
+        if errors:
+            self.message_user(request, f"{errors} ta buyurtmada xatolik yuz berdi.", level="warning")
+
+    @action(description="BTS holatni yangilash", icon="refresh")
+    def refresh_bts_status(self, request, queryset):
+        """BTS dan buyurtma holatini yangilash."""
+        updated = 0
+        for order in queryset.filter(bts_shipment_id__isnull=False).exclude(bts_shipment_id=""):
+            try:
+                tracking_data = get_bts_tracking(order.bts_shipment_id)
+                bts_status = tracking_data.get("status", "").lower().replace(" ", "_")
+                if bts_status and bts_status != order.bts_status:
+                    order.bts_status = bts_status
+                    order.save(update_fields=["bts_status"])
+                    updated += 1
+            except Exception as e:
+                logger.error(f"Failed to refresh BTS status for order #{order.id}: {e}")
+        self.message_user(request, f"{updated} ta buyurtma BTS holati yangilandi.")
+
     def get_queryset(self, request):
         return super().get_queryset(request).select_related("user").annotate(
             items_count_annotated=Count("items")
@@ -214,8 +273,8 @@ class OrderAdmin(ExportMixin, ModelAdmin):
             super().save_model(request, obj, form, change)
             try:
                 send_status_notification(obj, obj.status)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Failed to send status notification for order #{obj.id}: {e}")
         else:
             super().save_model(request, obj, form, change)
 

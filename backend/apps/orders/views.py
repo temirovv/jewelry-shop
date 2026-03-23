@@ -42,6 +42,20 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         try:
             with transaction.atomic():
+                # BTS region/city
+                delivery_region = None
+                delivery_city = None
+                if data.get("delivery_region_id"):
+                    from apps.delivery.models import BTSRegion, BTSCity
+
+                    delivery_region = BTSRegion.objects.filter(
+                        bts_id=data["delivery_region_id"]
+                    ).first()
+                    if data.get("delivery_city_id"):
+                        delivery_city = BTSCity.objects.filter(
+                            bts_id=data["delivery_city_id"]
+                        ).first()
+
                 # Buyurtma yaratish
                 order = Order.objects.create(
                     user=request.user,
@@ -49,6 +63,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                     delivery_address=data.get("delivery_address", ""),
                     comment=data.get("comment", ""),
                     payment_method=data.get("payment_method", "cash"),
+                    delivery_region=delivery_region,
+                    delivery_city=delivery_city,
                 )
 
                 # Elementlarni qo'shish

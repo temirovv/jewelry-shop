@@ -27,6 +27,11 @@ jobs:
           mkdir -p ~/.ssh
           ssh-keyscan -H ${{ secrets.STAGING_SSH_HOST }} >> ~/.ssh/known_hosts
 
+      - name: Backup database
+        run: |
+          ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} \
+            "cd ${{ secrets.STAGING_PROJECT_PATH }} && ./scripts/deploy.sh backup staging"
+
       - name: Deploy
         run: |
           ssh ${{ secrets.STAGING_SSH_USER }}@${{ secrets.STAGING_SSH_HOST }} \

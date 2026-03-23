@@ -12,6 +12,7 @@ import {
   Package,
   Banknote,
   CreditCard,
+  Truck,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -19,6 +20,13 @@ import { useCartStore } from "../stores/cartStore";
 import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../stores/toastStore";
 import { createOrder, prepareOrderItems } from "../lib/api/orders";
+import {
+  getRegions,
+  getCities,
+  calculateDelivery,
+  type BTSRegion,
+  type BTSCity,
+} from "../lib/api/delivery";
 import { formatPrice } from "../lib/utils";
 import type { PaymentMethod } from "../types";
 
@@ -37,6 +45,16 @@ export function CheckoutPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState<number | null>(null);
 
+  // BTS delivery
+  const [regions, setRegions] = useState<BTSRegion[]>([]);
+  const [cities, setCities] = useState<BTSCity[]>([]);
+  const [selectedRegion, setSelectedRegion] = useState<number | null>(null);
+  const [selectedCity, setSelectedCity] = useState<number | null>(null);
+  const [btsDeliveryFee, setBtsDeliveryFee] = useState<number | null>(null);
+  const [estimatedDays, setEstimatedDays] = useState<number | null>(null);
+  const [isCalcLoading, setIsCalcLoading] = useState(false);
+  const [isCitiesLoading, setIsCitiesLoading] = useState(false);
+
   useEffect(() => {
     showBackButton(() => navigate(-1));
     return () => hideBackButton();
@@ -48,8 +66,62 @@ export function CheckoutPage() {
     }
   }, [items, isSuccess, navigate]);
 
+  // Load BTS regions on mount
+  useEffect(() => {
+    getRegions()
+      .then(setRegions)
+      .catch(() => {
+        toast.error("Viloyatlar ro'yxatini yuklashda xatolik");
+      });
+  }, []);
+
+  // Load cities when region changes
+  useEffect(() => {
+    if (!selectedRegion) {
+      setCities([]);
+      setSelectedCity(null);
+      setBtsDeliveryFee(null);
+      setEstimatedDays(null);
+      return;
+    }
+    setIsCitiesLoading(true);
+    setSelectedCity(null);
+    setBtsDeliveryFee(null);
+    setEstimatedDays(null);
+    getCities(selectedRegion)
+      .then(setCities)
+      .catch(() => {
+        setCities([]);
+        toast.error("Shaharlar ro'yxatini yuklashda xatolik");
+      })
+      .finally(() => setIsCitiesLoading(false));
+  }, [selectedRegion]);
+
+  // Calculate delivery when city changes
+  useEffect(() => {
+    if (!selectedRegion || !selectedCity) {
+      setBtsDeliveryFee(null);
+      setEstimatedDays(null);
+      return;
+    }
+    setIsCalcLoading(true);
+    calculateDelivery(selectedRegion, selectedCity)
+      .then((result) => {
+        setBtsDeliveryFee(result.delivery_fee);
+        setEstimatedDays(result.estimated_days);
+      })
+      .catch(() => {
+        setBtsDeliveryFee(null);
+        setEstimatedDays(null);
+        toast.error("Yetkazish narxini hisoblashda xatolik");
+      })
+      .finally(() => setIsCalcLoading(false));
+  }, [selectedRegion, selectedCity]);
+
   const total = getTotal();
-  const deliveryFee = total >= 500000 ? 0 : 30000;
+  // Use BTS fee if available, otherwise fallback to hardcoded logic
+  const deliveryFee =
+    btsDeliveryFee !== null ? btsDeliveryFee : total >= 500000 ? 0 : 30000;
   const grandTotal = total + deliveryFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -76,6 +148,8 @@ export function CheckoutPage() {
         delivery_address: address.trim() || undefined,
         comment: comment.trim() || undefined,
         payment_method: paymentMethod,
+        delivery_region_id: selectedRegion || undefined,
+        delivery_city_id: selectedCity || undefined,
       });
 
       setOrderId(order.id);
@@ -257,13 +331,84 @@ export function CheckoutPage() {
             />
           </div>
 
+          {/* BTS Yetkazish */}
+          <div>
+            <label className="text-sm font-medium mb-2 flex items-center gap-2">
+              <Truck className="w-4 h-4" />
+              Yetkazish hududini tanlang
+            </label>
+            <select
+              value={selectedRegion || ""}
+              onChange={(e) =>
+                setSelectedRegion(e.target.value ? Number(e.target.value) : null)
+              }
+              className="w-full h-12 px-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              <option value="">Viloyatni tanlang</option>
+              {regions.map((r) => (
+                <option key={r.bts_id} value={r.bts_id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedRegion && (
+            <div>
+              <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Shahar
+              </label>
+              <select
+                value={selectedCity || ""}
+                onChange={(e) =>
+                  setSelectedCity(e.target.value ? Number(e.target.value) : null)
+                }
+                disabled={isCitiesLoading}
+                className="w-full h-12 px-3 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50"
+              >
+                <option value="">
+                  {isCitiesLoading ? "Yuklanmoqda..." : "Shaharni tanlang"}
+                </option>
+                {cities.map((c) => (
+                  <option key={c.bts_id} value={c.bts_id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {isCalcLoading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Yetkazish narxi hisoblanmoqda...
+            </div>
+          )}
+
+          {btsDeliveryFee !== null && estimatedDays !== null && (
+            <div className="bg-primary/5 border border-primary/20 rounded-xl p-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">BTS yetkazish narxi:</span>
+                <span className="font-semibold text-primary">
+                  {formatPrice(btsDeliveryFee)}
+                </span>
+              </div>
+              {estimatedDays && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Taxminiy muddat: {estimatedDays} kun
+                </p>
+              )}
+            </div>
+          )}
+
           <div>
             <label className="text-sm font-medium mb-2 flex items-center gap-2">
               <MapPin className="w-4 h-4" />
               Yetkazib berish manzili
             </label>
             <Input
-              placeholder="Shahar, ko'cha, uy..."
+              placeholder="Ko'cha, uy..."
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               className="h-12"

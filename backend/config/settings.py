@@ -1,8 +1,20 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import sentry_sdk
 
 load_dotenv()
+
+# Sentry
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+        profiles_sample_rate=float(os.getenv("SENTRY_PROFILES_SAMPLE_RATE", "0.1")),
+        environment=os.getenv("SENTRY_ENVIRONMENT", "production"),
+        send_default_pii=True,
+    )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -35,6 +47,7 @@ INSTALLED_APPS = [
     "apps.products",
     "apps.orders",
     "apps.cart",
+    "apps.delivery",
 ]
 
 MIDDLEWARE = [
@@ -171,6 +184,17 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 BOT_TOKEN = os.getenv("BOT_TOKEN", TELEGRAM_BOT_TOKEN)  # Notification uchun
 ADMIN_IDS = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()]
 
+# BTS Express
+BTS_API_URL = os.getenv("BTS_API_URL", "https://apitest.bts.uz:28345")
+BTS_USERNAME = os.getenv("BTS_USERNAME", "")
+BTS_PASSWORD = os.getenv("BTS_PASSWORD", "")
+BTS_SENDER_REGION_ID = os.getenv("BTS_SENDER_REGION_ID", "")
+BTS_SENDER_CITY_ID = os.getenv("BTS_SENDER_CITY_ID", "")
+
+# Celery
+CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
+
 # Unfold Admin Configuration
 UNFOLD = {
     "SITE_TITLE": "Jewelry Shop",
@@ -265,6 +289,28 @@ UNFOLD = {
                 ],
             },
             {
+                "title": "Yetkazish",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "BTS Viloyatlar",
+                        "icon": "location_on",
+                        "link": "/admin/delivery/btsregion/",
+                    },
+                    {
+                        "title": "BTS Shaharlar",
+                        "icon": "location_city",
+                        "link": "/admin/delivery/btscity/",
+                    },
+                    {
+                        "title": "BTS Filiallar",
+                        "icon": "warehouse",
+                        "link": "/admin/delivery/btsbranch/",
+                    },
+                ],
+            },
+            {
                 "title": "Foydalanuvchilar",
                 "separator": True,
                 "collapsible": True,
@@ -340,3 +386,38 @@ def environment_callback(request):
     if DEBUG:
         return ["Development", "warning"]
     return ["Production", "success"]
+
+
+# Logging
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "apps": {
+            "handlers": ["console"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
+}

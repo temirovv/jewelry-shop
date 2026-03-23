@@ -87,6 +87,10 @@ def send_status_notification(order: Order, new_status: str):
         f"📋 Yangi holat: <b>{status_label}</b>\n"
         f"💰 Summa: <b>{total_formatted} so'm</b>\n"
     )
+
+    if new_status == "shipped" and order.bts_tracking_code:
+        message += f"\n📦 Tracking kod: <b>{order.bts_tracking_code}</b>"
+
     if extra_msg:
         message += f"\n{extra_msg}"
 
