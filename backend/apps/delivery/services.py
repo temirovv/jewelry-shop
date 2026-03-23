@@ -2,7 +2,7 @@ import logging
 
 from django.conf import settings
 
-from .bts_client import get_bts_client
+from .bts_client import get_bts_client, BTSAPIError
 from .models import BTSRegion, BTSCity
 
 logger = logging.getLogger(__name__)
@@ -60,8 +60,12 @@ def calculate_delivery_cost(region_id: int, city_id: int, weight: float = 0.5) -
         weight=weight,
     )
 
-    delivery_fee = result.get("price") or result.get("cost") or result.get("total", 0)
+    delivery_fee = result.get("price") or result.get("cost") or result.get("total")
     estimated_days = result.get("delivery_days") or result.get("estimated_days") or result.get("days")
+
+    if delivery_fee is None:
+        logger.error(f"BTS calculate response'da narx topilmadi: {result}")
+        raise BTSAPIError("BTS yetkazish narxini aniqlab bo'lmadi")
 
     return {
         "delivery_fee": delivery_fee,
@@ -94,8 +98,12 @@ def create_bts_shipment(order) -> dict:
 
     result = client.create_order(order_data)
 
-    shipment_id = str(result.get("shipment_id") or result.get("id", ""))
+    shipment_id = str(result.get("shipment_id") or result.get("id") or "")
     tracking_code = str(result.get("tracking_code") or result.get("barcode") or shipment_id)
+
+    if not shipment_id:
+        logger.error(f"BTS create_order response'da shipment_id topilmadi: {result}")
+        raise BTSAPIError("BTS shipment yaratilmadi — javobda ID yo'q")
 
     return {
         "shipment_id": shipment_id,

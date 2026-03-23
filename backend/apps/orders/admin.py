@@ -53,6 +53,7 @@ class OrderAdmin(ExportMixin, ModelAdmin):
         "display_id",
         "display_user",
         "display_status",
+        "display_bts",
         "display_items_count",
         "display_payment",
         "display_total",
@@ -61,8 +62,8 @@ class OrderAdmin(ExportMixin, ModelAdmin):
         "created_at",
     ]
     list_display_links = ["display_id", "display_user"]
-    list_filter = ["status", "payment_method", "is_paid", "created_at"]
-    search_fields = ["user__first_name", "user__phone", "phone", "id"]
+    list_filter = ["status", "payment_method", "is_paid", "bts_status", "created_at"]
+    search_fields = ["user__first_name", "user__phone", "phone", "id", "bts_tracking_code"]
     readonly_fields = [
         "total", "created_at", "updated_at",
         "bts_shipment_id", "bts_tracking_code", "bts_status",
@@ -178,7 +179,20 @@ class OrderAdmin(ExportMixin, ModelAdmin):
                 send_status_notification(order, new_status)
             except Exception as e:
                 logger.error(f"Failed to send notification for order #{order.id}: {e}")
+            # Tasdiqlanganda avtomatik BTS ga yuborish
+            if new_status == "confirmed" and not order.bts_shipment_id:
+                self._auto_send_to_bts(order)
         self.message_user(request, message)
+
+    def _auto_send_to_bts(self, order):
+        """Buyurtmani BTS ga avtomatik yuborish (async)."""
+        if not order.delivery_region or not order.delivery_city:
+            return
+        try:
+            from apps.delivery.tasks import send_order_to_bts
+            send_order_to_bts.delay(order.id)
+        except Exception as e:
+            logger.warning(f"Failed to queue BTS shipment for order #{order.id}: {e}")
 
     @action(description="Tasdiqlash", icon="check_circle")
     def mark_confirmed(self, request, queryset):
@@ -275,8 +289,33 @@ class OrderAdmin(ExportMixin, ModelAdmin):
                 send_status_notification(obj, obj.status)
             except Exception as e:
                 logger.error(f"Failed to send status notification for order #{obj.id}: {e}")
+            # Tasdiqlanganda avtomatik BTS ga yuborish
+            if obj.status == "confirmed" and not obj.bts_shipment_id:
+                self._auto_send_to_bts(obj)
         else:
             super().save_model(request, obj, form, change)
+
+    @display(description="BTS")
+    def display_bts(self, obj):
+        if not obj.bts_tracking_code:
+            return format_html('<span class="text-gray-400 text-xs">—</span>')
+        status_colors = {
+            "created": "bg-blue-100 text-blue-800",
+            "accepted": "bg-blue-100 text-blue-800",
+            "in_transit": "bg-yellow-100 text-yellow-800",
+            "on_delivery": "bg-orange-100 text-orange-800",
+            "delivered": "bg-green-100 text-green-800",
+            "returned": "bg-red-100 text-red-800",
+            "cancelled": "bg-red-100 text-red-800",
+        }
+        css = status_colors.get(obj.bts_status, "bg-gray-100 text-gray-800")
+        return format_html(
+            '<div><span class="font-mono text-xs font-semibold">{}</span>'
+            '<br><span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs {}">{}</span></div>',
+            obj.bts_tracking_code,
+            css,
+            obj.bts_status or "—",
+        )
 
     @display(description="Manzil")
     def display_address(self, obj):

@@ -31,6 +31,8 @@ services:
       - DB_NAME=jewelry_db
       - DB_USER=postgres
       - DB_PASSWORD=postgres
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     volumes:
       - ./backend:/app
       - static_volume:/app/staticfiles
@@ -39,6 +41,8 @@ services:
       - "8000:8000"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     command: >
       sh -c "python manage.py migrate &&
@@ -56,6 +60,67 @@ services:
       - "3000:80"
     depends_on:
       - backend
+
+  # Redis (Celery broker)
+  redis:
+    image: redis:7-alpine
+    container_name: jewelry_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Celery Worker
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jewelry_celery
+    restart: unless-stopped
+    environment:
+      - DEBUG=False
+      - DB_HOST=db
+      - DB_NAME=jewelry_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A config worker -l info
+
+  # Celery Beat (periodic tasks)
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jewelry_celery_beat
+    restart: unless-stopped
+    environment:
+      - DEBUG=False
+      - DB_HOST=db
+      - DB_NAME=jewelry_db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A config beat -l info
 
   # Telegram Bot
   bot:

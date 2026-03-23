@@ -5,6 +5,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
+from .bts_client import BTSAPIError
 from .models import BTSRegion, BTSCity
 from .serializers import BTSRegionSerializer, BTSCitySerializer, DeliveryCalculateSerializer
 from .services import calculate_delivery_cost
@@ -49,9 +50,15 @@ def calculate_delivery(request):
             city_id=serializer.validated_data["city_id"],
         )
         return Response(result)
+    except BTSAPIError as e:
+        logger.error(f"BTS API error: {e}")
+        return Response(
+            {"error": f"BTS xatolik: {e}"},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
     except Exception as e:
         logger.error(f"BTS delivery calculation failed: {e}")
         return Response(
-            {"error": "Yetkazib berish narxini hisoblashda xatolik"},
-            status=status.HTTP_502_BAD_GATEWAY,
+            {"error": "Yetkazib berish narxini hisoblashda kutilmagan xatolik"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )

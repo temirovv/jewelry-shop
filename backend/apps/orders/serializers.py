@@ -75,3 +75,33 @@ class CreateOrderSerializer(serializers.Serializer):
                     f"Mahsulot #{item['product_id']} topilmadi"
                 )
         return value
+
+    def validate(self, data):
+        region_id = data.get("delivery_region_id")
+        city_id = data.get("delivery_city_id")
+
+        if region_id and not city_id:
+            raise serializers.ValidationError(
+                {"delivery_city_id": "Viloyat tanlangan bo'lsa, shahar ham tanlanishi kerak"}
+            )
+
+        if city_id and not region_id:
+            raise serializers.ValidationError(
+                {"delivery_region_id": "Shahar tanlangan bo'lsa, viloyat ham tanlanishi kerak"}
+            )
+
+        if region_id:
+            from apps.delivery.models import BTSRegion, BTSCity
+
+            if not BTSRegion.objects.filter(bts_id=region_id).exists():
+                raise serializers.ValidationError(
+                    {"delivery_region_id": "Tanlangan viloyat topilmadi"}
+                )
+            if city_id and not BTSCity.objects.filter(
+                bts_id=city_id, region__bts_id=region_id
+            ).exists():
+                raise serializers.ValidationError(
+                    {"delivery_city_id": "Tanlangan shahar bu viloyatda topilmadi"}
+                )
+
+        return data

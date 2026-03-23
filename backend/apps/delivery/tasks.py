@@ -17,6 +17,39 @@ BTS_STATUS_MAP = {
 
 
 @shared_task
+def send_order_to_bts(order_id: int):
+    """Buyurtmani BTS ga yuborish (async)."""
+    from apps.orders.models import Order
+    from .services import create_bts_shipment
+
+    try:
+        order = Order.objects.select_related(
+            "user", "delivery_region", "delivery_city"
+        ).get(id=order_id)
+    except Order.DoesNotExist:
+        logger.error(f"Order #{order_id} not found for BTS shipment")
+        return
+
+    if order.bts_shipment_id:
+        logger.info(f"Order #{order_id} already has BTS shipment, skipping")
+        return
+
+    if not order.delivery_region or not order.delivery_city:
+        logger.info(f"Order #{order_id} has no BTS delivery info, skipping")
+        return
+
+    try:
+        result = create_bts_shipment(order)
+        order.bts_shipment_id = result["shipment_id"]
+        order.bts_tracking_code = result["tracking_code"]
+        order.bts_status = "created"
+        order.save(update_fields=["bts_shipment_id", "bts_tracking_code", "bts_status"])
+        logger.info(f"Order #{order_id} sent to BTS: tracking={result['tracking_code']}")
+    except Exception as e:
+        logger.error(f"Failed to send order #{order_id} to BTS: {e}")
+
+
+@shared_task
 def sync_bts_tracking():
     """Sync BTS tracking statuses for active orders (Celery cron every 2 hours)."""
     from apps.orders.models import Order

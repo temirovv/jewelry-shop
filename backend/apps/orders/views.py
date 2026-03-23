@@ -87,11 +87,28 @@ class OrderViewSet(viewsets.ModelViewSet):
                     items_total += product.price * item_data["quantity"]
 
                 # Yetkazish narxini hisoblash
-                delivery_fee = (
-                    Decimal("0")
-                    if items_total >= FREE_DELIVERY_THRESHOLD
-                    else DELIVERY_FEE
-                )
+                delivery_fee = Decimal("0")
+                if delivery_region and delivery_city:
+                    # BTS orqali hisoblash
+                    try:
+                        from apps.delivery.services import calculate_delivery_cost
+
+                        bts_result = calculate_delivery_cost(
+                            delivery_region.bts_id, delivery_city.bts_id
+                        )
+                        bts_fee = bts_result.get("delivery_fee")
+                        if bts_fee:
+                            delivery_fee = Decimal(str(bts_fee))
+                    except Exception as e:
+                        logger.warning(f"BTS delivery fee hisoblashda xatolik: {e}")
+                        # Fallback: hardcoded fee
+                        if items_total < FREE_DELIVERY_THRESHOLD:
+                            delivery_fee = DELIVERY_FEE
+                else:
+                    # BTS tanlanmagan — hardcoded logic
+                    if items_total < FREE_DELIVERY_THRESHOLD:
+                        delivery_fee = DELIVERY_FEE
+
                 order.delivery_fee = delivery_fee
                 order.total = items_total + delivery_fee
                 order.save(update_fields=["delivery_fee", "total"])

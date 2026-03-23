@@ -35,6 +35,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     command: >
       sh -c "python manage.py migrate --noinput &&
              python manage.py collectstatic --noinput &&
@@ -52,6 +54,60 @@ services:
       - .env.staging
     command: sh -c "npm ci --prefer-offline && npm run build"
     restart: "no"
+
+  redis:
+    image: redis:7-alpine
+    container_name: jewelry_redis_staging
+    restart: on-failure
+    volumes:
+      - redis_staging_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  celery:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jewelry_celery_staging
+    restart: on-failure
+    env_file:
+      - .env.staging
+    environment:
+      - DEBUG=False
+      - DB_HOST=db
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - media_staging_volume:/app/media
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A config worker -l info --concurrency=1
+
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jewelry_celery_beat_staging
+    restart: on-failure
+    env_file:
+      - .env.staging
+    environment:
+      - DEBUG=False
+      - DB_HOST=db
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A config beat -l info
 
   bot:
     build:
@@ -85,6 +141,7 @@ services:
 
 volumes:
   postgres_staging_data:
+  redis_staging_data:
   static_staging_volume:
   media_staging_volume:
   frontend_staging_dist:
