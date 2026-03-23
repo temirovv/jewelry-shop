@@ -24,19 +24,6 @@ interface CartState {
   getItemsCount: () => number;
 }
 
-// Backend bilan sinxronizatsiya: action bajargandan so'ng to'liq cart qayta yuklash
-async function syncToBackend(
-  action: () => Promise<unknown>
-): Promise<CartItem[] | null> {
-  try {
-    await action();
-    const cart = await cartApi.getCart();
-    return cart.items || [];
-  } catch {
-    return null;
-  }
-}
-
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -53,7 +40,7 @@ export const useCartStore = create<CartState>()(
         if (existingItem) {
           set({
             items: items.map((item) =>
-              item.id === existingItem.id
+              item.product.id === product.id && item.size === size
                 ? { ...item, quantity: item.quantity + quantity }
                 : item
             ),
@@ -68,21 +55,32 @@ export const useCartStore = create<CartState>()(
           set({ items: [...items, newItem] });
         }
 
-        // Backend ga sinxronlash (background)
-        syncToBackend(() => cartApi.addToCart(product.id, quantity, size || ""))
-          .then((backendItems) => {
-            if (backendItems) set({ items: backendItems });
-          });
+        // Backend ga sinxronlash — backend javobini ishlatish
+        cartApi
+          .addToCart(product.id, quantity, size || "")
+          .then(() => cartApi.getCart())
+          .then((cart) => {
+            if (cart.items) set({ items: cart.items });
+          })
+          .catch(() => {});
       },
 
       removeItem: (itemId) => {
-        const item = get().items.find((i) => i.id === itemId);
-        set({ items: get().items.filter((i) => i.id !== itemId) });
+        const prevItems = get().items;
+        const item = prevItems.find((i) => i.id === itemId);
+        // Optimistic update
+        set({ items: prevItems.filter((i) => i.id !== itemId) });
 
         if (item) {
-          syncToBackend(() => cartApi.removeCartItem(itemId))
-            .then((backendItems) => {
-              if (backendItems) set({ items: backendItems });
+          cartApi
+            .removeCartItem(itemId)
+            .then(() => cartApi.getCart())
+            .then((cart) => {
+              if (cart.items) set({ items: cart.items });
+            })
+            .catch(() => {
+              // Rollback on failure
+              set({ items: prevItems });
             });
         }
       },
@@ -92,21 +90,30 @@ export const useCartStore = create<CartState>()(
           get().removeItem(itemId);
           return;
         }
+
+        const prevItems = get().items;
+        // Optimistic update
         set({
-          items: get().items.map((item) =>
+          items: prevItems.map((item) =>
             item.id === itemId ? { ...item, quantity } : item
           ),
         });
 
-        syncToBackend(() => cartApi.updateCartItem(itemId, quantity))
-          .then((backendItems) => {
-            if (backendItems) set({ items: backendItems });
+        cartApi
+          .updateCartItem(itemId, quantity)
+          .then(() => cartApi.getCart())
+          .then((cart) => {
+            if (cart.items) set({ items: cart.items });
+          })
+          .catch(() => {
+            // Rollback on failure
+            set({ items: prevItems });
           });
       },
 
       clearCart: () => {
         set({ items: [] });
-        syncToBackend(() => cartApi.clearCartApi());
+        cartApi.clearCartApi().catch(() => {});
       },
 
       openCart: () => set({ isOpen: true }),

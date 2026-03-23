@@ -77,7 +77,7 @@ export function ProductDetailPage() {
             data.results.filter((p) => p.id !== product.id).slice(0, 8)
           );
         })
-        .catch(() => {});
+        .catch(() => toast.error("O'xshash mahsulotlarni yuklashda xatolik"));
     }
   }, [product?.category?.slug, product?.id]);
 

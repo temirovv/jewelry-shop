@@ -58,7 +58,7 @@ export function HomePage() {
         const data = await getCategories();
         setCategories(data);
       } catch {
-        // silent
+        toast.error("Kategoriyalarni yuklashda xatolik");
       } finally {
         setIsCategoriesLoading(false);
       }
@@ -70,12 +70,12 @@ export function HomePage() {
   useEffect(() => {
     getNewArrivals()
       .then(setNewArrivals)
-      .catch(() => {})
+      .catch(() => toast.error("Yangi mahsulotlarni yuklashda xatolik"))
       .finally(() => setIsNewArrivalsLoading(false));
 
     getFeaturedProducts()
       .then(setFeaturedProducts)
-      .catch(() => {})
+      .catch(() => toast.error("Tavsiya mahsulotlarni yuklashda xatolik"))
       .finally(() => setIsFeaturedLoading(false));
   }, []);
 
@@ -108,7 +108,7 @@ export function HomePage() {
       setProducts((prev) => [...prev, ...data.results]);
       setNextPage(data.next);
     } catch {
-      // silent
+      toast.error("Mahsulotlarni yuklashda xatolik");
     } finally {
       setIsLoadingMore(false);
     }

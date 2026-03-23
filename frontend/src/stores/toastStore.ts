@@ -15,11 +15,13 @@ interface ToastState {
   removeToast: (id: number) => void;
 }
 
+let _toastCounter = 0;
+
 // Toast store
 export const useToastStore = create<ToastState>((set, get) => ({
   toasts: [],
   addToast: (message, type = "success") => {
-    const id = Date.now();
+    const id = ++_toastCounter;
     set({ toasts: [...get().toasts, { id, message, type }] });
 
     // Auto remove after 3 seconds
