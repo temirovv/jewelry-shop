@@ -1,19 +1,39 @@
-import React, { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Loader2 } from "lucide-react";
 import { HomePage } from "./pages/HomePage";
-import { ProductDetailPage } from "./pages/ProductDetailPage";
-import { CheckoutPage } from "./pages/CheckoutPage";
-import { SearchPage } from "./pages/SearchPage";
-import { FavoritesPage } from "./pages/FavoritesPage";
-import { ProfilePage } from "./pages/ProfilePage";
 import { useTelegram } from "./hooks/useTelegram";
 import { useCartStore } from "./stores/cartStore";
 import { useUserStore } from "./stores/userStore";
 import { ToastContainer } from "./components/Toast";
 import { springs } from "./lib/animations";
 import "./index.css";
+
+// Lazy-loaded pages
+const ProductDetailPage = React.lazy(() =>
+  import("./pages/ProductDetailPage").then((m) => ({ default: m.ProductDetailPage }))
+);
+const CheckoutPage = React.lazy(() =>
+  import("./pages/CheckoutPage").then((m) => ({ default: m.CheckoutPage }))
+);
+const SearchPage = React.lazy(() =>
+  import("./pages/SearchPage").then((m) => ({ default: m.SearchPage }))
+);
+const FavoritesPage = React.lazy(() =>
+  import("./pages/FavoritesPage").then((m) => ({ default: m.FavoritesPage }))
+);
+const ProfilePage = React.lazy(() =>
+  import("./pages/ProfilePage").then((m) => ({ default: m.ProfilePage }))
+);
+
+function LazyFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+    </div>
+  );
+}
 
 // Page wrapper - minimal transition
 function PageWrapper({ children }: { children: React.ReactNode }) {
@@ -46,7 +66,9 @@ function AnimatedRoutes() {
           path="/product/:id"
           element={
             <PageWrapper>
-              <ProductDetailPage />
+              <Suspense fallback={<LazyFallback />}>
+                <ProductDetailPage />
+              </Suspense>
             </PageWrapper>
           }
         />
@@ -54,7 +76,9 @@ function AnimatedRoutes() {
           path="/checkout"
           element={
             <PageWrapper>
-              <CheckoutPage />
+              <Suspense fallback={<LazyFallback />}>
+                <CheckoutPage />
+              </Suspense>
             </PageWrapper>
           }
         />
@@ -62,7 +86,9 @@ function AnimatedRoutes() {
           path="/search"
           element={
             <PageWrapper>
-              <SearchPage />
+              <Suspense fallback={<LazyFallback />}>
+                <SearchPage />
+              </Suspense>
             </PageWrapper>
           }
         />
@@ -70,7 +96,9 @@ function AnimatedRoutes() {
           path="/favorites"
           element={
             <PageWrapper>
-              <FavoritesPage />
+              <Suspense fallback={<LazyFallback />}>
+                <FavoritesPage />
+              </Suspense>
             </PageWrapper>
           }
         />
@@ -78,7 +106,9 @@ function AnimatedRoutes() {
           path="/profile"
           element={
             <PageWrapper>
-              <ProfilePage />
+              <Suspense fallback={<LazyFallback />}>
+                <ProfilePage />
+              </Suspense>
             </PageWrapper>
           }
         />
