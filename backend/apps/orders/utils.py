@@ -22,10 +22,11 @@ def send_order_notification(order: Order):
         logger.warning("BOT_TOKEN yoki ADMIN_IDS sozlanmagan")
         return
 
-    # Buyurtma ma'lumotlarini tayyorlash
+    # Buyurtma ma'lumotlarini tayyorlash (prefetch bilan N+1 oldini olish)
+    items = order.items.select_related("product").all()
     items_text = "\n".join(
         f"  • {item.product.name} x{item.quantity} — {item.price:,.0f} so'm"
-        for item in order.items.all()
+        for item in items
     )
 
     payment_method = order.get_payment_method_display()

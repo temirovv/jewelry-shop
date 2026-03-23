@@ -90,8 +90,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         try:
             cart = request.user.cart
             cart.items.all().delete()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning(f"Savatni tozalashda xatolik (user={request.user.id}): {e}")
 
         # Admin userlarga notification yuborish
         try:

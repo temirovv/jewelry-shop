@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib import admin
 from django.db.models import Count
 from django.utils.html import format_html
@@ -8,6 +10,8 @@ from import_export import resources
 from import_export.admin import ExportMixin
 from .models import Order, OrderItem
 from .utils import send_status_notification
+
+logger = logging.getLogger(__name__)
 
 
 class OrderResource(resources.ModelResource):
@@ -156,8 +160,8 @@ class OrderAdmin(ExportMixin, ModelAdmin):
             order.save(update_fields=["status"])
             try:
                 send_status_notification(order, new_status)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Failed to send notification for order #{order.id}: {e}")
         self.message_user(request, message)
 
     @action(description="Tasdiqlash", icon="check_circle")
@@ -214,8 +218,8 @@ class OrderAdmin(ExportMixin, ModelAdmin):
             super().save_model(request, obj, form, change)
             try:
                 send_status_notification(obj, obj.status)
-            except Exception:
-                pass
+            except Exception as e:
+                logger.error(f"Failed to send status notification for order #{obj.id}: {e}")
         else:
             super().save_model(request, obj, form, change)
 

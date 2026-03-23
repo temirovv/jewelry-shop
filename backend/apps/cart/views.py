@@ -21,7 +21,7 @@ def get_or_create_cart(user):
 def get_cart(request):
     """Savatni ko'rish"""
     if not hasattr(request.user, "telegram_id"):
-        return Response({"error": "Avtorizatsiya talab qilinadi"}, status=401)
+        return Response({"error": "Avtorizatsiya talab qilinadi"}, status=status.HTTP_401_UNAUTHORIZED)
 
     cart = get_or_create_cart(request.user)
     serializer = CartSerializer(cart)
@@ -32,7 +32,7 @@ def get_cart(request):
 def add_to_cart(request):
     """Savatga qo'shish"""
     if not hasattr(request.user, "telegram_id"):
-        return Response({"error": "Avtorizatsiya talab qilinadi"}, status=401)
+        return Response({"error": "Avtorizatsiya talab qilinadi"}, status=status.HTTP_401_UNAUTHORIZED)
 
     serializer = AddToCartSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -41,10 +41,10 @@ def add_to_cart(request):
     try:
         product = Product.objects.get(id=data["product_id"], is_active=True)
     except Product.DoesNotExist:
-        return Response({"error": "Mahsulot topilmadi"}, status=404)
+        return Response({"error": "Mahsulot topilmadi"}, status=status.HTTP_404_NOT_FOUND)
 
     if not product.in_stock:
-        return Response({"error": "Mahsulot sotuvda yo'q"}, status=400)
+        return Response({"error": "Mahsulot sotuvda yo'q"}, status=status.HTTP_400_BAD_REQUEST)
 
     cart = get_or_create_cart(request.user)
 
@@ -66,14 +66,14 @@ def add_to_cart(request):
 def update_cart_item(request, item_id):
     """Savat elementini yangilash"""
     if not hasattr(request.user, "telegram_id"):
-        return Response({"error": "Avtorizatsiya talab qilinadi"}, status=401)
+        return Response({"error": "Avtorizatsiya talab qilinadi"}, status=status.HTTP_401_UNAUTHORIZED)
 
     try:
         cart_item = CartItem.objects.get(
             id=item_id, cart__user=request.user
         )
     except CartItem.DoesNotExist:
-        return Response({"error": "Element topilmadi"}, status=404)
+        return Response({"error": "Element topilmadi"}, status=status.HTTP_404_NOT_FOUND)
 
     serializer = UpdateCartItemSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
@@ -94,7 +94,7 @@ def update_cart_item(request, item_id):
 def remove_from_cart(request, item_id):
     """Savatdan o'chirish"""
     if not hasattr(request.user, "telegram_id"):
-        return Response({"error": "Avtorizatsiya talab qilinadi"}, status=401)
+        return Response({"error": "Avtorizatsiya talab qilinadi"}, status=status.HTTP_401_UNAUTHORIZED)
 
     try:
         cart_item = CartItem.objects.get(
@@ -102,7 +102,7 @@ def remove_from_cart(request, item_id):
         )
         cart_item.delete()
     except CartItem.DoesNotExist:
-        return Response({"error": "Element topilmadi"}, status=404)
+        return Response({"error": "Element topilmadi"}, status=status.HTTP_404_NOT_FOUND)
 
     cart = get_or_create_cart(request.user)
     return Response(CartSerializer(cart).data)
@@ -112,7 +112,7 @@ def remove_from_cart(request, item_id):
 def clear_cart(request):
     """Savatni tozalash"""
     if not hasattr(request.user, "telegram_id"):
-        return Response({"error": "Avtorizatsiya talab qilinadi"}, status=401)
+        return Response({"error": "Avtorizatsiya talab qilinadi"}, status=status.HTTP_401_UNAUTHORIZED)
 
     cart = get_or_create_cart(request.user)
     cart.items.all().delete()

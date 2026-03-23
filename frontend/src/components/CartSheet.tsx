@@ -10,6 +10,7 @@ import {
 import { Button } from "./ui/button";
 import { useCartStore } from "../stores/cartStore";
 import { formatPrice } from "../lib/utils";
+import { calculateDeliveryFee } from "../lib/constants";
 import type { CartItem } from "../types";
 
 interface CartSheetProps {
@@ -26,7 +27,7 @@ export const CartSheet = memo(function CartSheet({
   const { items, updateQuantity, removeItem, getTotal, getItemsCount } = useCartStore();
   const total = getTotal();
   const itemsCount = getItemsCount();
-  const deliveryFee = total >= 500000 ? 0 : 30000;
+  const deliveryFee = calculateDeliveryFee(total);
   const grandTotal = total + deliveryFee;
 
   return (

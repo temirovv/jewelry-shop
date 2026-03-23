@@ -1,3 +1,4 @@
+from django.core.validators import MaxValueValidator
 from django.db import models
 from django.db.models import F, Sum
 from apps.users.models import TelegramUser
@@ -38,7 +39,10 @@ class CartItem(models.Model):
 
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name="items")
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField(default=1)
+    quantity = models.PositiveIntegerField(
+        default=1,
+        validators=[MaxValueValidator(99)],
+    )
     size = models.CharField(max_length=50, blank=True)
 
     class Meta:

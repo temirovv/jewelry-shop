@@ -25,6 +25,7 @@ import { BottomNav } from "../components/BottomNav";
 import { CartSheet } from "../components/CartSheet";
 import { useTelegram } from "../hooks/useTelegram";
 import { useUserStore } from "../stores/userStore";
+import { toast } from "../stores/toastStore";
 import { getOrders, getOrdersByUrl } from "../lib/api/orders";
 import { formatPrice } from "../lib/utils";
 import type { Order, OrderStatus } from "../types";
@@ -75,7 +76,7 @@ export function ProfilePage() {
         setOrders(ordersResult.orders);
         setNextOrdersPage(ordersResult.next);
       } catch {
-        // silent
+        toast.error("Ma'lumotlarni yuklashda xatolik");
       } finally {
         setIsLoading(false);
       }
@@ -108,6 +109,7 @@ export function ProfilePage() {
       hapticFeedback?.notificationOccurred?.("success");
       setTimeout(() => setSaveSuccess(false), 2000);
     } catch {
+      toast.error("Profilni saqlashda xatolik");
       hapticFeedback?.notificationOccurred?.("error");
     } finally {
       setIsSaving(false);
@@ -122,7 +124,7 @@ export function ProfilePage() {
       setOrders((prev) => [...prev, ...result.orders]);
       setNextOrdersPage(result.next);
     } catch {
-      // silent
+      toast.error("Buyurtmalarni yuklashda xatolik");
     } finally {
       setIsLoadingMore(false);
     }

@@ -20,6 +20,7 @@ import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../stores/toastStore";
 import { createOrder, prepareOrderItems } from "../lib/api/orders";
 import { formatPrice } from "../lib/utils";
+import { calculateDeliveryFee } from "../lib/constants";
 import type { PaymentMethod } from "../types";
 
 export function CheckoutPage() {
@@ -49,7 +50,7 @@ export function CheckoutPage() {
   }, [items, isSuccess, navigate]);
 
   const total = getTotal();
-  const deliveryFee = total >= 500000 ? 0 : 30000;
+  const deliveryFee = calculateDeliveryFee(total);
   const grandTotal = total + deliveryFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -61,8 +62,9 @@ export function CheckoutPage() {
       return;
     }
 
-    if (phone.replace(/\D/g, "").length < 9) {
-      toast.error("Telefon raqam noto'g'ri");
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length < 9 || digits.length > 12) {
+      toast.error("Telefon raqam noto'g'ri (9-12 raqam)");
       hapticFeedback?.notificationOccurred?.("error");
       return;
     }
@@ -82,8 +84,12 @@ export function CheckoutPage() {
       setIsSuccess(true);
       clearCart();
       hapticFeedback?.notificationOccurred?.("success");
-    } catch {
-      toast.error("Buyurtma yaratishda xatolik");
+    } catch (err) {
+      const message =
+        err instanceof Error && err.message
+          ? err.message
+          : "Buyurtma yaratishda xatolik. Qayta urinib ko'ring.";
+      toast.error(message);
       hapticFeedback?.notificationOccurred?.("error");
     } finally {
       setIsLoading(false);

@@ -62,7 +62,9 @@ export function SearchPage() {
 
   // Fetch categories
   useEffect(() => {
-    getCategories().then(setCategories).catch(() => {});
+    getCategories().then(setCategories).catch(() => {
+      toast.error("Kategoriyalarni yuklashda xatolik");
+    });
   }, []);
 
   // Search products
@@ -80,7 +82,7 @@ export function SearchPage() {
       setProducts(data.results);
       setNextPage(data.next);
     } catch {
-      // silent
+      toast.error("Qidiruv natijalarini yuklashda xatolik");
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +96,7 @@ export function SearchPage() {
       setProducts((prev) => [...prev, ...data.results]);
       setNextPage(data.next);
     } catch {
-      // silent
+      toast.error("Mahsulotlarni yuklashda xatolik");
     } finally {
       setIsLoadingMore(false);
     }

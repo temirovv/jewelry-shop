@@ -62,6 +62,14 @@ class CreateOrderSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     "Har bir element 'product_id' va 'quantity' bo'lishi kerak"
                 )
+            try:
+                qty = int(item["quantity"])
+            except (TypeError, ValueError):
+                raise serializers.ValidationError("Miqdor butun son bo'lishi kerak")
+            if qty < 1 or qty > 99:
+                raise serializers.ValidationError(
+                    "Miqdor 1 dan 99 gacha bo'lishi kerak"
+                )
             if not Product.objects.filter(id=item["product_id"], is_active=True).exists():
                 raise serializers.ValidationError(
                     f"Mahsulot #{item['product_id']} topilmadi"
