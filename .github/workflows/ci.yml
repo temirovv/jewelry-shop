@@ -1,6 +1,7 @@
 name: CI
 
 on:
+  workflow_call:
   pull_request:
     branches: [develop, main]
   push:
@@ -124,6 +125,12 @@ jobs:
         run: |
           cd bot
           pip install -r requirements.txt
+
+      - name: Lint with ruff
+        run: |
+          cd bot
+          pip install ruff
+          ruff check .
 
       - name: Syntax check
         run: |

@@ -8,3 +8,11 @@ dist
 npm-debug.log*
 coverage/
 .cache/
+.git
+.gitignore
+.github
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx

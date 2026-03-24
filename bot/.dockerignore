@@ -8,3 +8,9 @@ venv/
 *.log
 .env
 .env.*
+.git
+.gitignore
+.github
+.ruff_cache/
+.pytest_cache/
+tests/
