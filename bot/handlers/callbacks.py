@@ -29,7 +29,7 @@ async def cb_my_orders(callback: CallbackQuery):
         text += format_order_message(order) + "\n\n"
 
     if len(orders) > 5:
-        text += f"📋 Batafsil ko'rish uchun /orders buyrug'ini yuboring"
+        text += "📋 Batafsil ko'rish uchun /orders buyrug'ini yuboring"
 
     await callback.message.edit_text(text, reply_markup=get_back_keyboard())
     await callback.answer()

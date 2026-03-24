@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 import aiohttp
 from config import API_BASE_URL, BOT_TOKEN
 

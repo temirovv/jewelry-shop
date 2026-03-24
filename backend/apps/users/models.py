@@ -29,5 +29,10 @@ class TelegramUser(models.Model):
         return f"{self.first_name} ({self.telegram_id})"
 
     @property
+    def is_authenticated(self):
+        """DRF uchun — har doim True (autentifikatsiyadan o'tgan user)."""
+        return True
+
+    @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
