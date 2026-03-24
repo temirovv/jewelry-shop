@@ -19,7 +19,7 @@ class OrderResource(resources.ModelResource):
         model = Order
         fields = (
             "id", "user__first_name", "user__telegram_id",
-            "status", "total", "payment_method", "is_paid",
+            "status", "total", "delivery_fee", "payment_method", "is_paid",
             "phone", "delivery_address", "comment",
             "created_at", "updated_at",
         )
@@ -54,6 +54,7 @@ class OrderAdmin(ExportMixin, ModelAdmin):
         "display_status",
         "display_items_count",
         "display_payment",
+        "display_delivery_fee",
         "display_total",
         "phone",
         "display_address",
@@ -62,7 +63,7 @@ class OrderAdmin(ExportMixin, ModelAdmin):
     list_display_links = ["display_id", "display_user"]
     list_filter = ["status", "payment_method", "is_paid", "created_at"]
     search_fields = ["user__first_name", "user__phone", "phone", "id"]
-    readonly_fields = ["total", "created_at", "updated_at"]
+    readonly_fields = ["total", "delivery_fee", "created_at", "updated_at"]
     inlines = [OrderItemInline]
     ordering = ["-created_at"]
     list_filter_submit = True
@@ -81,7 +82,7 @@ class OrderAdmin(ExportMixin, ModelAdmin):
             "classes": ["tab"],
         }),
         ("To'lov", {
-            "fields": ("payment_method", "is_paid", "total"),
+            "fields": ("payment_method", "is_paid", "delivery_fee", "total"),
             "classes": ["tab"],
         }),
         ("Vaqt", {
@@ -121,6 +122,16 @@ class OrderAdmin(ExportMixin, ModelAdmin):
     )
     def display_status(self, obj):
         return obj.status
+
+    @display(description="Yetkazish", ordering="delivery_fee")
+    def display_delivery_fee(self, obj):
+        if obj.delivery_fee and obj.delivery_fee > 0:
+            fee_formatted = f"{obj.delivery_fee:,.0f}".replace(",", " ")
+            return format_html(
+                '<span class="text-xs text-orange-600">{} so\'m</span>',
+                fee_formatted
+            )
+        return format_html('<span class="text-xs text-green-600">Bepul</span>')
 
     @display(description="Jami", ordering="total")
     def display_total(self, obj):

@@ -42,6 +42,16 @@ class CartAdmin(ModelAdmin):
     readonly_fields = ["created_at", "updated_at"]
     search_fields = ["user__first_name", "user__username", "user__telegram_id"]
     list_filter_submit = True
+    fieldsets = (
+        ("Savat", {
+            "fields": ("user",),
+            "classes": ["tab"],
+        }),
+        ("Vaqt", {
+            "fields": ("created_at", "updated_at"),
+            "classes": ["tab"],
+        }),
+    )
     date_hierarchy = "updated_at"
     list_per_page = 20
     actions = ["clear_carts", "delete_empty_carts"]

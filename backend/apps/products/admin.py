@@ -213,9 +213,10 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
 
     @display(description="Rasm")
     def display_image(self, obj):
-        main_image = obj.images.filter(is_main=True).first() or obj.images.first()
+        # prefetch_related dan foydalanish — alohida query qilmaydi
+        images = list(obj.images.all())
+        main_image = next((i for i in images if i.is_main), None) or (images[0] if images else None)
         if main_image:
-            # Check for file or URL
             image_url = None
             if main_image.image:
                 image_url = main_image.image.url
@@ -290,4 +291,7 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
     def unmark_featured(self, request, queryset):
         queryset.update(is_featured=False)
         self.message_user(request, f"{queryset.count()} ta mahsulot maxsusdan chiqarildi.")
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related("images")
 
