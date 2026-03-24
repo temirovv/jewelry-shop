@@ -1,6 +1,7 @@
 import { memo, useRef } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Skeleton } from "./ui/skeleton";
 import { cn } from "../lib/utils";
 import type { Category } from "../types";
 
@@ -33,9 +34,9 @@ export const CategorySlider = memo(function CategorySlider({
     return (
       <div className="flex gap-3 px-4 py-3 overflow-hidden">
         {[1, 2, 3, 4, 5].map((i) => (
-          <div
+          <Skeleton
             key={i}
-            className="h-10 w-24 rounded-full bg-muted animate-pulse flex-shrink-0"
+            className="h-10 w-24 rounded-full flex-shrink-0"
           />
         ))}
       </div>

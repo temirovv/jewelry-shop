@@ -80,8 +80,10 @@ export const Header = memo(function Header({
             </Button>
             {itemsCount > 0 && (
               <motion.div
+                key={itemsCount}
                 initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
+                animate={{ scale: [0, 1.2, 1] }}
+                transition={{ duration: 0.3, times: [0, 0.6, 1] }}
                 className="absolute -top-0.5 -right-0.5"
               >
                 <Badge

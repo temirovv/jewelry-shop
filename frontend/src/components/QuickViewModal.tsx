@@ -230,7 +230,18 @@ export const QuickViewModal = memo(function QuickViewModal({
                     >
                       <Minus className="w-4 h-4" />
                     </motion.button>
-                    <span className="w-10 text-center font-semibold">{quantity}</span>
+                    <AnimatePresence mode="wait">
+                      <motion.span
+                        key={quantity}
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 6 }}
+                        transition={{ duration: 0.15 }}
+                        className="w-10 text-center font-semibold inline-block"
+                      >
+                        {quantity}
+                      </motion.span>
+                    </AnimatePresence>
                     <motion.button
                       whileTap={{ scale: 0.9 }}
                       onClick={() => setQuantity(quantity + 1)}

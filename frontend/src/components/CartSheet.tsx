@@ -182,9 +182,18 @@ const CartItemCard = memo(function CartItemCard({
             >
               <Minus className="w-3.5 h-3.5" />
             </motion.button>
-            <span className="w-8 text-center text-sm font-medium">
-              {item.quantity}
-            </span>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={item.quantity}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.15 }}
+                className="w-8 text-center text-sm font-medium inline-block"
+              >
+                {item.quantity}
+              </motion.span>
+            </AnimatePresence>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}

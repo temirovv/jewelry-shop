@@ -44,9 +44,13 @@ export const ProductCard = memo(function ProductCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.03, duration: 0.25, ease: "easeOut" }}
+      variants={{
+        hidden: { opacity: 0, y: 20 },
+        visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
+      }}
+      initial="hidden"
+      animate="visible"
+      transition={{ delay: index * 0.03 }}
     >
       <Card
         className="overflow-hidden cursor-pointer group border-0 shadow-sm active:scale-[0.98] transition-transform duration-150 bg-card/80"
@@ -66,7 +70,7 @@ export const ProductCard = memo(function ProductCard({
             <img
               src={mainImage.image}
               alt={product.name}
-              className={`w-full h-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+              className={`w-full h-full object-cover transition-all duration-500 ${imageLoaded ? "opacity-100 blur-0 scale-100" : "opacity-0 blur-sm scale-105"}`}
               onLoad={() => setImageLoaded(true)}
               loading="lazy"
             />
@@ -92,25 +96,32 @@ export const ProductCard = memo(function ProductCard({
           </div>
 
           {/* Favorite Button */}
-          <button
-            className="absolute top-2.5 right-2.5 p-2.5 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md shadow-lg active:scale-90 transition-transform duration-150"
+          <motion.button
+            className="absolute top-2.5 right-2.5 p-2.5 rounded-full bg-white/90 dark:bg-black/50 backdrop-blur-md shadow-lg"
             onClick={handleLike}
+            whileTap={{ scale: 0.85 }}
           >
-            <Heart
-              className={`h-4 w-4 transition-colors duration-200 ${
-                isLiked ? "fill-red-500 text-red-500" : "text-gray-600"
-              }`}
-            />
-          </button>
+            <motion.div
+              animate={isLiked ? { scale: [1, 1.3, 1] } : { scale: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Heart
+                className={`h-4 w-4 transition-colors duration-200 ${
+                  isLiked ? "fill-red-500 text-red-500" : "text-gray-600"
+                }`}
+              />
+            </motion.div>
+          </motion.button>
 
           {/* Cart Button (mobile) */}
           {product.in_stock && (
-            <button
-              className="absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full gold-gradient flex items-center justify-center shadow-lg active:scale-90 transition-transform duration-150"
+            <motion.button
+              className="absolute bottom-2.5 right-2.5 w-9 h-9 rounded-full gold-gradient flex items-center justify-center shadow-lg"
               onClick={handleAddToCart}
+              whileTap={{ scale: 0.85 }}
             >
               <ShoppingBag className="h-4 w-4 text-white" />
-            </button>
+            </motion.button>
           )}
 
           {/* Out of Stock Overlay */}

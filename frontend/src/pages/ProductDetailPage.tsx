@@ -370,20 +370,33 @@ export function ProductDetailPage() {
         <div className="flex items-center gap-4">
           {/* Quantity Selector */}
           <div className="flex items-center gap-2 bg-muted rounded-xl p-1">
-            <button
+            <motion.button
+              whileTap={{ scale: 0.85 }}
               onClick={() => setQuantity((q) => Math.max(1, q - 1))}
               className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-background transition-colors"
               disabled={quantity <= 1}
             >
               <Minus className="w-4 h-4" />
-            </button>
-            <span className="w-8 text-center font-medium">{quantity}</span>
-            <button
+            </motion.button>
+            <AnimatePresence mode="wait">
+              <motion.span
+                key={quantity}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.15 }}
+                className="w-8 text-center font-medium inline-block"
+              >
+                {quantity}
+              </motion.span>
+            </AnimatePresence>
+            <motion.button
+              whileTap={{ scale: 0.85 }}
               onClick={() => setQuantity((q) => q + 1)}
               className="w-10 h-10 rounded-lg flex items-center justify-center hover:bg-background transition-colors"
             >
               <Plus className="w-4 h-4" />
-            </button>
+            </motion.button>
           </div>
 
           {/* Add to Cart Button */}

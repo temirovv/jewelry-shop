@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, Search as SearchIcon, Loader2 } from "lucide-react";
+import { AlertCircle, Search as SearchIcon, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Header } from "../components/Header";
 import { HeroBanner } from "../components/HeroBanner";
@@ -15,9 +15,9 @@ import { BottomNav } from "../components/BottomNav";
 import { SidebarMenu } from "../components/SidebarMenu";
 import { useCartStore } from "../stores/cartStore";
 import { useTelegram } from "../hooks/useTelegram";
+import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { toast } from "../stores/toastStore";
 import { getProducts, getProductsByUrl, getCategories, getNewArrivals, getFeaturedProducts } from "../lib/api/products";
-// animations import removed for performance
 import type { Product, Category } from "../types";
 
 export function HomePage() {
@@ -50,6 +50,26 @@ export function HomePage() {
 
   // Telegram
   const { hapticFeedback } = useTelegram();
+
+  // Pull-to-refresh
+  const handleRefresh = useCallback(async () => {
+    const [cats, newArr, feat, prods] = await Promise.all([
+      getCategories().catch(() => categories),
+      getNewArrivals().catch(() => newArrivals),
+      getFeaturedProducts().catch(() => featuredProducts),
+      getProducts(selectedCategory ? { category: selectedCategory } : undefined).catch(() => ({ results: products, next: nextPage })),
+    ]);
+    setCategories(cats);
+    setNewArrivals(newArr);
+    setFeaturedProducts(feat);
+    setProducts(prods.results);
+    setNextPage(prods.next);
+    toast.success("Yangilandi");
+  }, [selectedCategory, categories, newArrivals, featuredProducts, products, nextPage]);
+
+  const { pullDistance, isRefreshing, handlers: pullHandlers } = usePullToRefresh({
+    onRefresh: handleRefresh,
+  });
 
   // Fetch Categories
   useEffect(() => {
@@ -145,7 +165,30 @@ export function HomePage() {
   }, [hapticFeedback, navigate]);
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div
+      className="min-h-screen bg-background pb-20"
+      {...pullHandlers}
+    >
+      {/* Pull-to-refresh indicator */}
+      <AnimatePresence>
+        {pullDistance > 0 && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: pullDistance, opacity: Math.min(pullDistance / 80, 1) }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: "tween", duration: 0.15 }}
+            className="flex items-center justify-center overflow-hidden"
+          >
+            <motion.div
+              animate={{ rotate: isRefreshing ? 360 : (pullDistance / 80) * 360 }}
+              transition={isRefreshing ? { repeat: Infinity, duration: 0.8, ease: "linear" } : { duration: 0 }}
+            >
+              <RefreshCw className={`w-5 h-5 text-amber-500 ${isRefreshing ? "animate-spin" : ""}`} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <Header
         onMenuClick={() => setMenuOpen(true)}
@@ -279,9 +322,10 @@ export function HomePage() {
           ) : (
             <motion.div
               key="products"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ staggerChildren: 0.06 }}
               className="grid grid-cols-2 gap-3"
             >
               {products.map((product, index) => (

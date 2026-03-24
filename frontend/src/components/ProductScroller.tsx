@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { motion } from "framer-motion";
 import { ShoppingBag, Heart, Sparkles } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
@@ -25,6 +25,7 @@ function CompactCard({
   onPress: () => void;
   onAddToCart: (e: React.MouseEvent) => void;
 }) {
+  const [imageLoaded, setImageLoaded] = useState(false);
   const { toggleItem, isFavorite } = useFavoritesStore();
   const isLiked = isFavorite(product.id);
   const mainImage = product.images?.find((img) => img.is_main) || product.images?.[0];
@@ -46,7 +47,8 @@ function CompactCard({
           <img
             src={mainImage.image}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className={`w-full h-full object-cover transition-all duration-500 ${imageLoaded ? "opacity-100 blur-0 scale-100" : "opacity-0 blur-sm scale-105"}`}
+            onLoad={() => setImageLoaded(true)}
             loading="lazy"
           />
         ) : (

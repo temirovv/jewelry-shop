@@ -224,6 +224,35 @@ export const pageVariants: Variants = {
   },
 };
 
+// Directional page transitions
+export const pageSlideForward: Variants = {
+  initial: { opacity: 0, x: "30%" },
+  enter: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.3, ease: easings.luxury },
+  },
+  exit: {
+    opacity: 0,
+    x: "-15%",
+    transition: { duration: 0.2, ease: easings.easeIn },
+  },
+};
+
+export const pageSlideBack: Variants = {
+  initial: { opacity: 0, x: "-30%" },
+  enter: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.3, ease: easings.luxury },
+  },
+  exit: {
+    opacity: 0,
+    x: "15%",
+    transition: { duration: 0.2, ease: easings.easeIn },
+  },
+};
+
 // Bottom nav item
 export const navItemVariants: Variants = {
   inactive: { scale: 1, y: 0 },

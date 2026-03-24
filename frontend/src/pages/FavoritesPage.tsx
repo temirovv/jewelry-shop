@@ -109,7 +109,13 @@ export function FavoritesPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 {items.length} ta mahsulot
               </p>
-              <div className="grid grid-cols-2 gap-3">
+              <motion.div
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ staggerChildren: 0.06 }}
+                className="grid grid-cols-2 gap-3"
+              >
                 {items.map((product, index) => (
                   <ProductCard
                     key={product.id}
@@ -120,7 +126,7 @@ export function FavoritesPage() {
                     onQuickView={handleProductPress}
                   />
                 ))}
-              </div>
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>

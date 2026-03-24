@@ -2,6 +2,7 @@ import { memo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { Button } from "./ui/button";
+import { Skeleton } from "./ui/skeleton";
 import { getBanners } from "../lib/api/banners";
 import type { Banner } from "../types";
 
@@ -119,7 +120,7 @@ export const HeroBanner = memo(function HeroBanner({ onExplore }: HeroBannerProp
   if (loading) {
     return (
       <div className="relative overflow-hidden">
-        <div className="h-44 md:h-56 bg-muted/50 mx-4 rounded-2xl animate-pulse" />
+        <Skeleton className="h-44 md:h-56 mx-4 rounded-2xl" />
       </div>
     );
   }

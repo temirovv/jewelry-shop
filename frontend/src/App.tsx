@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from "react";
+import React, { Suspense, useEffect, useSyncExternalStore } from "react";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, Loader2 } from "lucide-react";
@@ -7,7 +7,8 @@ import { useTelegram } from "./hooks/useTelegram";
 import { useCartStore } from "./stores/cartStore";
 import { useUserStore } from "./stores/userStore";
 import { ToastContainer } from "./components/Toast";
-import { springs } from "./lib/animations";
+import { OfflineBanner } from "./components/OfflineBanner";
+import { springs, pageSlideForward, pageSlideBack, pageVariants } from "./lib/animations";
 import "./index.css";
 
 // Lazy-loaded pages
@@ -35,21 +36,80 @@ function LazyFallback() {
   );
 }
 
-// Page wrapper - minimal transition
-function PageWrapper({ children }: { children: React.ReactNode }) {
+// Route depth for directional transitions
+function getRouteDepth(pathname: string): number {
+  if (pathname === "/") return 0;
+  if (/^\/(search|favorites|profile)$/.test(pathname)) return 1;
+  if (/^\/product\//.test(pathname)) return 2;
+  if (pathname === "/checkout") return 3;
+  return 1;
+}
+
+// Page wrapper with directional slide
+function PageWrapper({
+  children,
+  direction,
+}: {
+  children: React.ReactNode;
+  direction: "forward" | "back" | "same";
+}) {
+  const variants =
+    direction === "forward"
+      ? pageSlideForward
+      : direction === "back"
+        ? pageSlideBack
+        : pageVariants;
+
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.15 }}
+      variants={variants}
+      initial="initial"
+      animate="enter"
+      exit="exit"
     >
       {children}
     </motion.div>
   );
 }
 
+// External store for navigation direction
+const navDirectionStore = {
+  _prevDepth: 0,
+  _direction: "same" as "forward" | "back" | "same",
+  _listeners: new Set<() => void>(),
+  update(pathname: string) {
+    const currentDepth = getRouteDepth(pathname);
+    const newDir =
+      currentDepth > this._prevDepth
+        ? "forward" as const
+        : currentDepth < this._prevDepth
+          ? "back" as const
+          : "same" as const;
+    this._prevDepth = currentDepth;
+    if (newDir !== this._direction) {
+      this._direction = newDir;
+      this._listeners.forEach((l) => l());
+    }
+  },
+  subscribe(listener: () => void) {
+    navDirectionStore._listeners.add(listener);
+    return () => { navDirectionStore._listeners.delete(listener); };
+  },
+  getSnapshot() {
+    return navDirectionStore._direction;
+  },
+};
+
 function AnimatedRoutes() {
   const location = useLocation();
+  const direction = useSyncExternalStore(
+    navDirectionStore.subscribe,
+    navDirectionStore.getSnapshot,
+  );
+
+  useEffect(() => {
+    navDirectionStore.update(location.pathname);
+  }, [location.pathname]);
 
   return (
     <AnimatePresence mode="wait" initial={false}>
@@ -57,7 +117,7 @@ function AnimatedRoutes() {
         <Route
           path="/"
           element={
-            <PageWrapper>
+            <PageWrapper direction={direction}>
               <HomePage />
             </PageWrapper>
           }
@@ -65,7 +125,7 @@ function AnimatedRoutes() {
         <Route
           path="/product/:id"
           element={
-            <PageWrapper>
+            <PageWrapper direction={direction}>
               <Suspense fallback={<LazyFallback />}>
                 <ProductDetailPage />
               </Suspense>
@@ -75,7 +135,7 @@ function AnimatedRoutes() {
         <Route
           path="/checkout"
           element={
-            <PageWrapper>
+            <PageWrapper direction={direction}>
               <Suspense fallback={<LazyFallback />}>
                 <CheckoutPage />
               </Suspense>
@@ -85,7 +145,7 @@ function AnimatedRoutes() {
         <Route
           path="/search"
           element={
-            <PageWrapper>
+            <PageWrapper direction={direction}>
               <Suspense fallback={<LazyFallback />}>
                 <SearchPage />
               </Suspense>
@@ -95,7 +155,7 @@ function AnimatedRoutes() {
         <Route
           path="/favorites"
           element={
-            <PageWrapper>
+            <PageWrapper direction={direction}>
               <Suspense fallback={<LazyFallback />}>
                 <FavoritesPage />
               </Suspense>
@@ -105,7 +165,7 @@ function AnimatedRoutes() {
         <Route
           path="/profile"
           element={
-            <PageWrapper>
+            <PageWrapper direction={direction}>
               <Suspense fallback={<LazyFallback />}>
                 <ProfilePage />
               </Suspense>
@@ -182,6 +242,7 @@ function AppContent() {
 
   return (
     <>
+      <OfflineBanner />
       <AnimatedRoutes />
       <ToastContainer />
     </>

@@ -339,8 +339,10 @@ export function SearchPage() {
           ) : (
             <motion.div
               key="products"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ staggerChildren: 0.06 }}
               className="grid grid-cols-2 gap-3"
             >
               {products.map((product, index) => (
