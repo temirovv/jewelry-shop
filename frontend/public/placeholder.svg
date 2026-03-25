@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
+  <rect width="400" height="400" fill="#faf5eb"/>
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#d4a574;stop-opacity:0.6"/>
+      <stop offset="100%" style="stop-color:#b8860b;stop-opacity:0.4"/>
+    </linearGradient>
+  </defs>
+  <circle cx="200" cy="170" r="50" fill="none" stroke="url(#g)" stroke-width="2"/>
+  <path d="M200 130 L206 150 L228 150 L210 162 L216 182 L200 172 L184 182 L190 162 L172 150 L194 150 Z" fill="url(#g)" opacity="0.5"/>
+  <text x="200" y="260" text-anchor="middle" font-family="system-ui,sans-serif" font-size="14" fill="#b8860b" opacity="0.6">JEWELRY</text>
+</svg>

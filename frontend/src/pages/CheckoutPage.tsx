@@ -226,7 +226,7 @@ export function CheckoutPage() {
               >
                 <img
                   src={
-                    item.product.images[0]?.image || "/placeholder.jpg"
+                    item.product.images[0]?.image || "/placeholder.svg"
                   }
                   alt={item.product.name}
                   className="w-14 h-14 rounded-lg object-cover"

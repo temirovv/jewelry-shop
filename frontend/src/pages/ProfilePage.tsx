@@ -281,7 +281,7 @@ export function ProfilePage() {
                             key={item.id}
                             src={
                               item.product.images[0]?.image ||
-                              "/placeholder.jpg"
+                              "/placeholder.svg"
                             }
                             alt={item.product.name}
                             className="w-12 h-12 rounded-lg object-cover shrink-0"

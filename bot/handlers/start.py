@@ -41,7 +41,7 @@ async def cmd_help(message: Message):
         "🔹 <b>Yetkazib berish:</b>\n"
         "500,000 so'mdan yuqori buyurtmalarga bepul!\n"
         "Qolganlar uchun 30,000 so'm.\n\n"
-        "❓ Savollaringiz bo'lsa, @admin_username ga yozing.",
+        "❓ Savollaringiz bo'lsa, @Age_Of_AI ga yozing.",
     )
 
 

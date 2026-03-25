@@ -40,9 +40,9 @@ async def cb_contact(callback: CallbackQuery):
     """Aloqa ma'lumotlari"""
     await callback.message.edit_text(
         "📞 <b>Biz bilan bog'lanish</b>\n\n"
-        "📱 Telefon: +998 XX XXX XX XX\n"
-        "📧 Email: info@jewelry.uz\n"
-        "📍 Manzil: Toshkent sh., ...\n\n"
+        "📱 Telefon: +998 99 332 31 55\n"
+        "📧 Email: temirovv21@gmail.com\n"
+        "💬 Telegram: @Age_Of_AI\n\n"
         "⏰ Ish vaqti: 09:00 - 21:00",
         reply_markup=get_back_keyboard(),
     )
@@ -63,7 +63,7 @@ async def cb_help(callback: CallbackQuery):
         "500,000 so'mdan yuqori — bepul!\n"
         "Qolganlar uchun 30,000 so'm.\n"
         "Toshkent bo'ylab 1-2 kun ichida.\n\n"
-        "❓ Boshqa savollar uchun @admin_username ga yozing.",
+        "❓ Boshqa savollar uchun @Age_Of_AI ga yozing.",
         reply_markup=get_back_keyboard(),
     )
     await callback.answer()

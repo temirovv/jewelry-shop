@@ -242,7 +242,7 @@ export function ProductDetailPage() {
             className="w-full h-full cursor-grab active:cursor-grabbing"
           >
             <motion.img
-              src={product.images[currentImageIndex]?.image || "/placeholder.jpg"}
+              src={product.images[currentImageIndex]?.image || "/placeholder.svg"}
               alt={product.name}
               className="w-full h-full object-cover select-none"
               animate={{ scale: isZoomed ? 2 : 1 }}
