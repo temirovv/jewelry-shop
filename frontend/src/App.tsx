@@ -27,6 +27,9 @@ const FavoritesPage = React.lazy(() =>
 const ProfilePage = React.lazy(() =>
   import("./pages/ProfilePage").then((m) => ({ default: m.ProfilePage }))
 );
+const OrderDetailPage = React.lazy(() =>
+  import("./pages/OrderDetailPage").then((m) => ({ default: m.OrderDetailPage }))
+);
 
 function LazyFallback() {
   return (
@@ -41,6 +44,7 @@ function getRouteDepth(pathname: string): number {
   if (pathname === "/") return 0;
   if (/^\/(search|favorites|profile)$/.test(pathname)) return 1;
   if (/^\/product\//.test(pathname)) return 2;
+  if (/^\/order\//.test(pathname)) return 2;
   if (pathname === "/checkout") return 3;
   return 1;
 }
@@ -158,6 +162,16 @@ function AnimatedRoutes() {
             <PageWrapper direction={direction}>
               <Suspense fallback={<LazyFallback />}>
                 <FavoritesPage />
+              </Suspense>
+            </PageWrapper>
+          }
+        />
+        <Route
+          path="/order/:id"
+          element={
+            <PageWrapper direction={direction}>
+              <Suspense fallback={<LazyFallback />}>
+                <OrderDetailPage />
               </Suspense>
             </PageWrapper>
           }

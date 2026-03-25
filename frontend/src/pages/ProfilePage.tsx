@@ -255,7 +255,8 @@ export function ProfilePage() {
                       key={order.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="bg-muted/50 rounded-xl p-4"
+                      className="bg-muted/50 rounded-xl p-4 cursor-pointer active:scale-[0.98] transition-transform"
+                      onClick={() => navigate(`/order/${order.id}`)}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div>

@@ -56,6 +56,8 @@ export function SearchPage() {
     searchParams.get("metal_type") || ""
   );
   const [sortBy, setSortBy] = useState(searchParams.get("ordering") || "");
+  const [minPrice, setMinPrice] = useState(searchParams.get("min_price") || "");
+  const [maxPrice, setMaxPrice] = useState(searchParams.get("max_price") || "");
 
   const { hapticFeedback } = useTelegram();
   const addItem = useCartStore((state) => state.addItem);
@@ -77,6 +79,8 @@ export function SearchPage() {
       if (selectedCategory) filters.category = selectedCategory;
       if (selectedMetal) filters.metal_type = selectedMetal;
       if (sortBy) filters.ordering = sortBy;
+      if (minPrice) filters.min_price = Number(minPrice);
+      if (maxPrice) filters.max_price = Number(maxPrice);
 
       const data = await getProducts(filters);
       setProducts(data.results);
@@ -86,7 +90,7 @@ export function SearchPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [query, selectedCategory, selectedMetal, sortBy]);
+  }, [query, selectedCategory, selectedMetal, sortBy, minPrice, maxPrice]);
 
   const loadMoreProducts = useCallback(async () => {
     if (!nextPage || isLoadingMore) return;
@@ -115,8 +119,10 @@ export function SearchPage() {
     if (selectedCategory) params.set("category", selectedCategory);
     if (selectedMetal) params.set("metal_type", selectedMetal);
     if (sortBy) params.set("ordering", sortBy);
+    if (minPrice) params.set("min_price", minPrice);
+    if (maxPrice) params.set("max_price", maxPrice);
     setSearchParams(params, { replace: true });
-  }, [query, selectedCategory, selectedMetal, sortBy, setSearchParams]);
+  }, [query, selectedCategory, selectedMetal, sortBy, minPrice, maxPrice, setSearchParams]);
 
   const handleAddToCart = useCallback(
     (product: Product, quantity: number = 1) => {
@@ -139,18 +145,21 @@ export function SearchPage() {
     setSelectedCategory("");
     setSelectedMetal("");
     setSortBy("");
+    setMinPrice("");
+    setMaxPrice("");
     hapticFeedback?.impactOccurred?.("light");
   };
 
-  const hasFilters = selectedCategory || selectedMetal || sortBy;
+  const hasFilters = selectedCategory || selectedMetal || sortBy || minPrice || maxPrice;
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (selectedCategory) count++;
     if (selectedMetal) count++;
     if (sortBy) count++;
+    if (minPrice || maxPrice) count++;
     return count;
-  }, [selectedCategory, selectedMetal, sortBy]);
+  }, [selectedCategory, selectedMetal, sortBy, minPrice, maxPrice]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -246,6 +255,33 @@ export function SearchPage() {
                         {metal.label}
                       </Badge>
                     ))}
+                  </div>
+                </div>
+
+                {/* Price Range */}
+                <div>
+                  <label className="text-sm font-medium mb-2 block">
+                    Narx oralig'i
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      placeholder="dan"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(e.target.value)}
+                      className="h-9 text-sm"
+                      min={0}
+                    />
+                    <span className="text-muted-foreground text-sm shrink-0">—</span>
+                    <Input
+                      type="number"
+                      placeholder="gacha"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(e.target.value)}
+                      className="h-9 text-sm"
+                      min={0}
+                    />
+                    <span className="text-muted-foreground text-xs shrink-0">so'm</span>
                   </div>
                 </div>
 

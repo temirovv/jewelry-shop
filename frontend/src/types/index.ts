@@ -71,7 +71,9 @@ export interface Order {
   user: User;
   items: OrderItem[];
   total: number;
+  delivery_fee: number;
   status: OrderStatus;
+  status_display: string;
   delivery_address?: string;
   phone: string;
   comment?: string;
