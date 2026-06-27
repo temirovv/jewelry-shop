@@ -9,9 +9,12 @@ import {
   Minus,
   Plus,
   PackageX,
-  Scale,
-  Gem,
-  Ruler,
+  Droplet,
+  Sparkles,
+  Globe,
+  Clock,
+  Palette,
+  Building2,
   CircleCheck,
   CircleX,
 } from "lucide-react";
@@ -150,18 +153,37 @@ export function ProductDetailPage() {
     ? Math.round(((product.old_price - product.price) / product.old_price) * 100)
     : 0;
 
-  const metalLabels: Record<string, string> = {
-    gold: "Oltin",
-    silver: "Kumush",
-    platinum: "Platina",
-    white_gold: "Oq oltin",
+  const typeLabels: Record<string, string> = {
+    skincare: "Teri parvarishi",
+    makeup: "Makiyaj",
+    perfume: "Parfyumeriya",
+    haircare: "Soch parvarishi",
+    bodycare: "Tana parvarishi",
+  };
+
+  const skinLabels: Record<string, string> = {
+    all: "Barcha teri turlari",
+    dry: "Quruq",
+    oily: "Yog'li",
+    combination: "Aralash",
+    normal: "Normal",
+    sensitive: "Sezgir",
   };
 
   const specs = [
-    { icon: Gem, label: "Metall turi", value: metalLabels[product.metal_type] || product.metal_type },
-    { icon: Scale, label: "Og'irligi", value: `${product.weight} gr` },
-    ...(product.proba ? [{ icon: Gem, label: "Proba", value: product.proba }] : []),
-    ...(product.size ? [{ icon: Ruler, label: "O'lchami", value: product.size }] : []),
+    ...(product.brand ? [{ icon: Building2, label: "Brend", value: product.brand.name }] : []),
+    { icon: Sparkles, label: "Turi", value: typeLabels[product.product_type] || product.product_type },
+    ...(product.volume ? [{ icon: Droplet, label: "Hajmi", value: product.volume }] : []),
+    ...(product.shade ? [{ icon: Palette, label: "Rang/ton", value: product.shade }] : []),
+    ...(product.skin_type && product.skin_type !== "all"
+      ? [{ icon: Droplet, label: "Teri turi", value: skinLabels[product.skin_type] || product.skin_type }]
+      : []),
+    ...(product.shelf_life_months
+      ? [{ icon: Clock, label: "Yaroqlilik", value: `${product.shelf_life_months} oy` }]
+      : []),
+    ...(product.country_of_origin
+      ? [{ icon: Globe, label: "Ishlab chiqarilgan", value: product.country_of_origin }]
+      : []),
     {
       icon: product.in_stock ? CircleCheck : CircleX,
       label: "Mavjudligi",
@@ -266,6 +288,16 @@ export function ProductDetailPage() {
             {product.description}
           </p>
         </div>
+
+        {/* Ingredients */}
+        {product.ingredients && (
+          <div>
+            <h3 className="font-display font-semibold mb-2">Tarkibi</h3>
+            <p className="text-muted-foreground leading-relaxed text-sm">
+              {product.ingredients}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Related Products */}

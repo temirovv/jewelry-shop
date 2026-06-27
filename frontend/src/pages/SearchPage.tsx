@@ -18,7 +18,8 @@ import { useCartStore } from "../stores/cartStore";
 import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../stores/toastStore";
 import { getProducts, getProductsByUrl, getCategories, type ProductFilters } from "../lib/api/products";
-import type { Product, Category } from "../types";
+import { getBrands } from "../lib/api/brands";
+import type { Product, Category, Brand } from "../types";
 
 const SORT_OPTIONS = [
   { value: "", label: "Standart" },
@@ -27,12 +28,13 @@ const SORT_OPTIONS = [
   { value: "-price", label: "Qimmat" },
 ];
 
-const METAL_TYPES = [
+const PRODUCT_TYPES = [
   { value: "", label: "Barchasi" },
-  { value: "gold", label: "Oltin" },
-  { value: "silver", label: "Kumush" },
-  { value: "platinum", label: "Platina" },
-  { value: "white_gold", label: "Oq oltin" },
+  { value: "skincare", label: "Teri parvarishi" },
+  { value: "makeup", label: "Makiyaj" },
+  { value: "perfume", label: "Parfyumeriya" },
+  { value: "haircare", label: "Soch parvarishi" },
+  { value: "bodycare", label: "Tana parvarishi" },
 ];
 
 export function SearchPage() {
@@ -42,6 +44,7 @@ export function SearchPage() {
   const [query, setQuery] = useState(searchParams.get("q") || "");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [nextPage, setNextPage] = useState<string | null>(null);
@@ -52,8 +55,11 @@ export function SearchPage() {
   const [selectedCategory, setSelectedCategory] = useState(
     searchParams.get("category") || ""
   );
-  const [selectedMetal, setSelectedMetal] = useState(
-    searchParams.get("metal_type") || ""
+  const [selectedBrand, setSelectedBrand] = useState(
+    searchParams.get("brand") || ""
+  );
+  const [selectedType, setSelectedType] = useState(
+    searchParams.get("product_type") || ""
   );
   const [sortBy, setSortBy] = useState(searchParams.get("ordering") || "");
   const [minPrice, setMinPrice] = useState(searchParams.get("min_price") || "");
@@ -62,10 +68,13 @@ export function SearchPage() {
   const { hapticFeedback } = useTelegram();
   const addItem = useCartStore((state) => state.addItem);
 
-  // Fetch categories
+  // Fetch categories & brands
   useEffect(() => {
     getCategories().then(setCategories).catch(() => {
       toast.error("Kategoriyalarni yuklashda xatolik");
+    });
+    getBrands().then(setBrands).catch(() => {
+      toast.error("Brendlarni yuklashda xatolik");
     });
   }, []);
 
@@ -77,7 +86,8 @@ export function SearchPage() {
       const filters: ProductFilters = {};
       if (query.trim()) filters.search = query.trim();
       if (selectedCategory) filters.category = selectedCategory;
-      if (selectedMetal) filters.metal_type = selectedMetal;
+      if (selectedBrand) filters.brand = selectedBrand;
+      if (selectedType) filters.product_type = selectedType;
       if (sortBy) filters.ordering = sortBy;
       if (minPrice) filters.min_price = Number(minPrice);
       if (maxPrice) filters.max_price = Number(maxPrice);
@@ -90,7 +100,7 @@ export function SearchPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [query, selectedCategory, selectedMetal, sortBy, minPrice, maxPrice]);
+  }, [query, selectedCategory, selectedBrand, selectedType, sortBy, minPrice, maxPrice]);
 
   const loadMoreProducts = useCallback(async () => {
     if (!nextPage || isLoadingMore) return;
@@ -117,12 +127,13 @@ export function SearchPage() {
     const params = new URLSearchParams();
     if (query) params.set("q", query);
     if (selectedCategory) params.set("category", selectedCategory);
-    if (selectedMetal) params.set("metal_type", selectedMetal);
+    if (selectedBrand) params.set("brand", selectedBrand);
+    if (selectedType) params.set("product_type", selectedType);
     if (sortBy) params.set("ordering", sortBy);
     if (minPrice) params.set("min_price", minPrice);
     if (maxPrice) params.set("max_price", maxPrice);
     setSearchParams(params, { replace: true });
-  }, [query, selectedCategory, selectedMetal, sortBy, minPrice, maxPrice, setSearchParams]);
+  }, [query, selectedCategory, selectedBrand, selectedType, sortBy, minPrice, maxPrice, setSearchParams]);
 
   const handleAddToCart = useCallback(
     (product: Product, quantity: number = 1) => {
@@ -143,23 +154,25 @@ export function SearchPage() {
 
   const clearFilters = () => {
     setSelectedCategory("");
-    setSelectedMetal("");
+    setSelectedBrand("");
+    setSelectedType("");
     setSortBy("");
     setMinPrice("");
     setMaxPrice("");
     hapticFeedback?.impactOccurred?.("light");
   };
 
-  const hasFilters = selectedCategory || selectedMetal || sortBy || minPrice || maxPrice;
+  const hasFilters = selectedCategory || selectedBrand || selectedType || sortBy || minPrice || maxPrice;
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
     if (selectedCategory) count++;
-    if (selectedMetal) count++;
+    if (selectedBrand) count++;
+    if (selectedType) count++;
     if (sortBy) count++;
     if (minPrice || maxPrice) count++;
     return count;
-  }, [selectedCategory, selectedMetal, sortBy, minPrice, maxPrice]);
+  }, [selectedCategory, selectedBrand, selectedType, sortBy, minPrice, maxPrice]);
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -237,26 +250,56 @@ export function SearchPage() {
                   </div>
                 </div>
 
-                {/* Metal Type */}
+                {/* Product Type */}
                 <div>
                   <label className="text-sm font-medium mb-2 block">
-                    Metall turi
+                    Mahsulot turi
                   </label>
                   <div className="flex flex-wrap gap-2">
-                    {METAL_TYPES.map((metal) => (
+                    {PRODUCT_TYPES.map((type) => (
                       <Badge
-                        key={metal.value}
+                        key={type.value}
                         variant={
-                          selectedMetal === metal.value ? "default" : "outline"
+                          selectedType === type.value ? "default" : "outline"
                         }
                         className="cursor-pointer"
-                        onClick={() => setSelectedMetal(metal.value)}
+                        onClick={() => setSelectedType(type.value)}
                       >
-                        {metal.label}
+                        {type.label}
                       </Badge>
                     ))}
                   </div>
                 </div>
+
+                {/* Brand */}
+                {brands.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      Brend
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge
+                        variant={!selectedBrand ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => setSelectedBrand("")}
+                      >
+                        Barchasi
+                      </Badge>
+                      {brands.map((brand) => (
+                        <Badge
+                          key={brand.id}
+                          variant={
+                            selectedBrand === brand.slug ? "default" : "outline"
+                          }
+                          className="cursor-pointer"
+                          onClick={() => setSelectedBrand(brand.slug)}
+                        >
+                          {brand.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Price Range */}
                 <div>

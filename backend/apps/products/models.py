@@ -7,10 +7,10 @@ class Banner(models.Model):
 
     title = models.CharField(max_length=100)
     subtitle = models.CharField(max_length=200, blank=True)
-    emoji = models.CharField(max_length=10, default="💎", help_text="Banner emoji")
+    emoji = models.CharField(max_length=10, default="💄", help_text="Banner emoji")
     gradient = models.CharField(
         max_length=200,
-        default="from-amber-500/20 via-amber-600/10 to-transparent",
+        default="from-pink-500/20 via-rose-400/10 to-transparent",
         help_text="Tailwind gradient classlari"
     )
     link = models.CharField(max_length=200, blank=True, help_text="Bosilganda o'tish linki")
@@ -52,14 +52,51 @@ class Category(models.Model):
         super().save(*args, **kwargs)
 
 
-class Product(models.Model):
-    """Zargarlik buyumi"""
+class Brand(models.Model):
+    """Kosmetika brendi"""
 
-    METAL_TYPES = [
-        ("gold", "Oltin"),
-        ("silver", "Kumush"),
-        ("platinum", "Platina"),
-        ("white_gold", "Oq oltin"),
+    name = models.CharField(max_length=120)
+    slug = models.SlugField(max_length=120, unique=True, blank=True)
+    logo = models.ImageField(upload_to="brands/", blank=True, null=True)
+    country = models.CharField(max_length=80, blank=True, help_text="Ishlab chiqaruvchi davlat")
+    description = models.TextField(blank=True)
+    is_featured = models.BooleanField(default=False, help_text="Bosh sahifada ko'rsatish")
+    is_active = models.BooleanField(default=True)
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Brend"
+        verbose_name_plural = "Brendlar"
+        ordering = ["order", "name"]
+
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name, allow_unicode=True)
+        super().save(*args, **kwargs)
+
+
+class Product(models.Model):
+    """Kosmetika mahsuloti"""
+
+    PRODUCT_TYPES = [
+        ("skincare", "Teri parvarishi"),
+        ("makeup", "Makiyaj"),
+        ("perfume", "Parfyumeriya"),
+        ("haircare", "Soch parvarishi"),
+        ("bodycare", "Tana parvarishi"),
+    ]
+
+    SKIN_TYPES = [
+        ("all", "Barcha teri turlari"),
+        ("dry", "Quruq"),
+        ("oily", "Yog'li"),
+        ("combination", "Aralash"),
+        ("normal", "Normal"),
+        ("sensitive", "Sezgir"),
     ]
 
     name = models.CharField(max_length=255)
@@ -70,10 +107,18 @@ class Product(models.Model):
     category = models.ForeignKey(
         Category, on_delete=models.PROTECT, related_name="products"
     )
-    metal_type = models.CharField(max_length=20, choices=METAL_TYPES, default="gold")
-    weight = models.DecimalField(max_digits=6, decimal_places=2, help_text="Gramm")
-    size = models.CharField(max_length=50, blank=True)
-    proba = models.CharField(max_length=10, default="585", help_text="585, 750, 925 va h.k.")
+    brand = models.ForeignKey(
+        Brand, on_delete=models.PROTECT, related_name="products", null=True, blank=True
+    )
+    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPES, default="skincare")
+    skin_type = models.CharField(max_length=20, choices=SKIN_TYPES, default="all", blank=True)
+    volume = models.CharField(max_length=50, blank=True, help_text="Hajm, masalan 50 ml")
+    shade = models.CharField(max_length=80, blank=True, help_text="Rang/ton, masalan 'Nude 02'")
+    ingredients = models.TextField(blank=True, help_text="Asosiy tarkib")
+    shelf_life_months = models.PositiveIntegerField(
+        blank=True, null=True, help_text="Yaroqlilik muddati (oy)"
+    )
+    country_of_origin = models.CharField(max_length=80, blank=True)
 
     in_stock = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False, help_text="Bosh sahifada ko'rsatish")

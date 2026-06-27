@@ -137,7 +137,7 @@ export const ProductCard = memo(function ProductCard({
         {/* Content */}
         <div className="p-3.5">
           <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-1">
-            {product.category?.name}
+            {product.brand?.name || product.category?.name}
           </p>
           <h3 className="font-medium text-sm leading-tight line-clamp-2 mb-2">
             {product.name}
@@ -152,10 +152,10 @@ export const ProductCard = memo(function ProductCard({
               </span>
             )}
           </div>
-          {product.weight && (
+          {product.volume && (
             <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
-              <span className="w-1 h-1 rounded-full bg-amber-400" />
-              {product.weight} gr • {product.metal_type === "gold" ? "Oltin" : product.metal_type === "silver" ? "Kumush" : "Oq oltin"}
+              <span className="w-1 h-1 rounded-full bg-pink-400" />
+              {product.volume}
             </p>
           )}
         </div>

@@ -11,9 +11,9 @@ const defaultSlides: Banner[] = [
   {
     id: 1,
     title: "Yangi Kolleksiya",
-    subtitle: "Premium zargarlik buyumlari",
-    emoji: "💎",
-    gradient: "from-amber-100 via-amber-50 to-orange-50 dark:from-amber-900/30 dark:via-amber-800/20 dark:to-orange-900/20",
+    subtitle: "Premium kosmetika mahsulotlari",
+    emoji: "💄",
+    gradient: "from-pink-100 via-rose-50 to-fuchsia-50 dark:from-pink-900/30 dark:via-rose-800/20 dark:to-fuchsia-900/20",
   },
   {
     id: 2,

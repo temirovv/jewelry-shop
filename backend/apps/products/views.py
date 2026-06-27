@@ -2,11 +2,13 @@ from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
 
-from .models import Banner, Category, Product
+from .models import Banner, Brand, Category, Product
 from .serializers import (
     BannerSerializer,
+    BrandSerializer,
     CategorySerializer,
     ProductListSerializer,
     ProductDetailSerializer,
@@ -32,15 +34,41 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = None
 
 
+class BrandViewSet(viewsets.ReadOnlyModelViewSet):
+    """Brendlar API"""
+
+    serializer_class = BrandSerializer
+    permission_classes = [AllowAny]
+    pagination_class = None
+    lookup_field = "slug"
+
+    def get_queryset(self):
+        return (
+            Brand.objects.filter(is_active=True)
+            .annotate(products_count=Count("products"))
+        )
+
+    @action(detail=False, methods=["get"])
+    def featured(self, request):
+        """Tavsiya qilingan brendlar"""
+        queryset = self.get_queryset().filter(is_featured=True)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     """Mahsulotlar API"""
 
-    queryset = Product.objects.filter(is_active=True).prefetch_related("images")
+    queryset = (
+        Product.objects.filter(is_active=True)
+        .select_related("category", "brand")
+        .prefetch_related("images")
+    )
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ProductFilter
-    search_fields = ["name", "description"]
-    ordering_fields = ["price", "created_at", "weight"]
+    search_fields = ["name", "description", "brand__name"]
+    ordering_fields = ["price", "created_at"]
     ordering = ["-created_at"]
 
     def get_serializer_class(self):

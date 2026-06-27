@@ -73,7 +73,8 @@
       "Bash(ssh:*)",
       "Bash(python manage.py test)",
       "Bash(npx tsc *)",
-      "Bash(python manage.py test apps.orders apps.cart apps.users)"
+      "Bash(python manage.py test apps.orders apps.cart apps.users)",
+      "Bash(venv/Scripts/python.exe *)"
     ],
     "deny": [],
     "ask": []

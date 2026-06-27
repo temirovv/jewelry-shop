@@ -1,182 +1,175 @@
 from django.core.management.base import BaseCommand
-from apps.products.models import Category, Product
+from apps.products.models import Brand, Category, Product
 
 
 class Command(BaseCommand):
-    help = "Test ma'lumotlarni yaratish"
+    help = "Test ma'lumotlarni yaratish (kosmetika)"
 
     def handle(self, *args, **options):
         self.stdout.write("Ma'lumotlar yaratilmoqda...")
 
         # Kategoriyalar
         categories_data = [
-            {"name": "Uzuklar", "slug": "rings", "icon": "💍", "order": 1},
-            {"name": "Sirg'alar", "slug": "earrings", "icon": "✨", "order": 2},
-            {"name": "Marjonlar", "slug": "necklaces", "icon": "📿", "order": 3},
-            {"name": "Bilaguzuklar", "slug": "bracelets", "icon": "⌚", "order": 4},
-            {"name": "To'plamlar", "slug": "sets", "icon": "🎁", "order": 5},
-            {"name": "Soatlar", "slug": "watches", "icon": "⏰", "order": 6},
+            {"name": "Teri parvarishi", "slug": "skincare", "icon": "🧴", "order": 1},
+            {"name": "Makiyaj", "slug": "makeup", "icon": "💄", "order": 2},
+            {"name": "Parfyumeriya", "slug": "perfume", "icon": "🌸", "order": 3},
+            {"name": "Soch parvarishi", "slug": "haircare", "icon": "💆", "order": 4},
+            {"name": "Tana parvarishi", "slug": "bodycare", "icon": "🧼", "order": 5},
         ]
 
         categories = {}
         for cat_data in categories_data:
             cat, created = Category.objects.get_or_create(
-                slug=cat_data["slug"],
-                defaults=cat_data
+                slug=cat_data["slug"], defaults=cat_data
             )
             categories[cat_data["slug"]] = cat
             status = "yaratildi" if created else "mavjud"
             self.stdout.write(f"  Kategoriya: {cat.name} - {status}")
 
+        # Brendlar
+        brands_data = [
+            {"name": "L'Oréal Paris", "slug": "loreal", "country": "Fransiya", "is_featured": True, "order": 1},
+            {"name": "Maybelline", "slug": "maybelline", "country": "AQSH", "is_featured": True, "order": 2},
+            {"name": "The Ordinary", "slug": "the-ordinary", "country": "Kanada", "is_featured": True, "order": 3},
+            {"name": "CeraVe", "slug": "cerave", "country": "AQSH", "is_featured": True, "order": 4},
+            {"name": "Nivea", "slug": "nivea", "country": "Germaniya", "is_featured": False, "order": 5},
+            {"name": "Garnier", "slug": "garnier", "country": "Fransiya", "is_featured": False, "order": 6},
+            {"name": "Dior", "slug": "dior", "country": "Fransiya", "is_featured": True, "order": 7},
+        ]
+
+        brands = {}
+        for b_data in brands_data:
+            brand, created = Brand.objects.get_or_create(
+                slug=b_data["slug"], defaults=b_data
+            )
+            brands[b_data["slug"]] = brand
+            status = "yaratildi" if created else "mavjud"
+            self.stdout.write(f"  Brend: {brand.name} - {status}")
+
         # Mahsulotlar
         products_data = [
             {
-                "name": "Oltin uzuk 585 proba, brilliant bilan",
-                "description": "Klassik dizayndagi oltin uzuk. 585 proba sof oltin, markazida 0.5 karatli brilliant. Har qanday tantanali marosim uchun ideal tanlov.",
-                "price": 2500000,
-                "old_price": 3000000,
-                "category": "rings",
-                "metal_type": "gold",
-                "weight": 3.5,
-                "size": "17",
-                "proba": "585",
-                "is_featured": True,
+                "name": "Revitalift namlovchi yuz kremi",
+                "description": "Hyaluron kislotasi bilan namlovchi va yoshartiruvchi yuz kremi. Quruq va aralash teri uchun ideal.",
+                "price": 185000, "old_price": 230000,
+                "category": "skincare", "brand": "loreal",
+                "product_type": "skincare", "skin_type": "dry",
+                "volume": "50 ml", "country_of_origin": "Fransiya",
+                "shelf_life_months": 24, "is_featured": True,
             },
             {
-                "name": "Nikoh uzugi klassik",
-                "description": "Sodda va nafis nikoh uzugi. 585 proba oltin, ichki qismida isim yozish mumkin.",
-                "price": 1800000,
-                "category": "rings",
-                "metal_type": "gold",
-                "weight": 2.8,
-                "size": "16-22",
-                "proba": "585",
-                "is_featured": False,
+                "name": "Niacinamide 10% + Zinc 1% serum",
+                "description": "Yog' ajralishini muvozanatlaydigan va teri tonusini tekislaydigan serum. Yog'li va muammoli teri uchun.",
+                "price": 95000,
+                "category": "skincare", "brand": "the-ordinary",
+                "product_type": "skincare", "skin_type": "oily",
+                "volume": "30 ml", "country_of_origin": "Kanada",
+                "shelf_life_months": 12, "is_featured": True,
             },
             {
-                "name": "Sirg'a to'plami, marvarid bilan",
-                "description": "Tabiiy dengiz marvaridi bilan bezatilgan sirg'alar. 585 proba oltin, marvarid diametri 8mm.",
-                "price": 1800000,
-                "category": "earrings",
-                "metal_type": "gold",
-                "weight": 2.8,
-                "proba": "585",
-                "is_featured": True,
+                "name": "CeraVe namlovchi losyon",
+                "description": "Seramidlar va hyaluron kislotasi bilan teri to'sig'ini tiklaydigan losyon. Sezgir teri uchun.",
+                "price": 145000, "old_price": 170000,
+                "category": "skincare", "brand": "cerave",
+                "product_type": "skincare", "skin_type": "sensitive",
+                "volume": "236 ml", "country_of_origin": "AQSH",
+                "shelf_life_months": 24, "is_featured": True,
             },
             {
-                "name": "Osilib turadigan sirg'alar",
-                "description": "Zamonaviy dizayn, 585 proba oltin. Har qanday libosga mos keladi.",
-                "price": 2200000,
-                "old_price": 2500000,
-                "category": "earrings",
-                "metal_type": "gold",
-                "weight": 4.2,
-                "proba": "585",
-                "is_featured": False,
+                "name": "Maybelline Fit Me tonal krem",
+                "description": "Tabiiy ko'rinish beruvchi, teriga mos keluvchi tonal asos. SPF 18 bilan.",
+                "price": 120000,
+                "category": "makeup", "brand": "maybelline",
+                "product_type": "makeup", "skin_type": "all",
+                "volume": "30 ml", "shade": "220 Natural Beige",
+                "country_of_origin": "AQSH", "shelf_life_months": 36, "is_featured": True,
             },
             {
-                "name": "Marjon zanjir, italyan to'qish",
-                "description": "Italiya ishlab chiqarishi, 585 proba oltin. Uzunligi 45sm, kengaytirilishi mumkin.",
-                "price": 4200000,
-                "old_price": 4800000,
-                "category": "necklaces",
-                "metal_type": "gold",
-                "weight": 8.2,
-                "proba": "585",
-                "is_featured": True,
+                "name": "Maybelline Lash Sensational tush",
+                "description": "Kipriklarga hajm va uzunlik beruvchi tush. Suvga chidamli formula.",
+                "price": 110000, "old_price": 135000,
+                "category": "makeup", "brand": "maybelline",
+                "product_type": "makeup", "skin_type": "all",
+                "volume": "9.5 ml", "shade": "Qora",
+                "country_of_origin": "AQSH", "shelf_life_months": 24, "is_featured": False,
             },
             {
-                "name": "Marjon kulon bilan",
-                "description": "Yurak shaklidagi kulon, 585 proba oltin. Ichiga rasm qo'yish mumkin.",
-                "price": 3500000,
-                "category": "necklaces",
-                "metal_type": "gold",
-                "weight": 6.5,
-                "proba": "585",
-                "is_featured": False,
+                "name": "L'Oréal Color Riche lab bo'yog'i",
+                "description": "Nam va to'yingan ranglarga ega lab bo'yog'i. Argan moyi bilan.",
+                "price": 98000,
+                "category": "makeup", "brand": "loreal",
+                "product_type": "makeup", "skin_type": "all",
+                "volume": "4.8 g", "shade": "Nude 235",
+                "country_of_origin": "Fransiya", "shelf_life_months": 36, "is_featured": True,
             },
             {
-                "name": "Bilaguzuk, oltin 585",
-                "description": "Zamonaviy dizayn, 585 proba oltin. Uzunligi sozlanadi.",
-                "price": 3100000,
-                "category": "bracelets",
-                "metal_type": "gold",
-                "weight": 5.4,
-                "proba": "585",
-                "is_featured": False,
+                "name": "Dior Sauvage parfyum suvi",
+                "description": "Yangi va o'ziga jalb qiluvchi erkaklar atiri. Bergamot va ambroksan notalari.",
+                "price": 1450000, "old_price": 1650000,
+                "category": "perfume", "brand": "dior",
+                "product_type": "perfume", "skin_type": "all",
+                "volume": "100 ml", "country_of_origin": "Fransiya",
+                "shelf_life_months": 60, "is_featured": True,
             },
             {
-                "name": "Tennis bilaguzuk brilliant bilan",
-                "description": "Klassik tennis bilaguzuk, 585 proba oltin, 2 karat umumiy brilliant vazni.",
-                "price": 8500000,
-                "old_price": 9500000,
-                "category": "bracelets",
-                "metal_type": "gold",
-                "weight": 12.0,
-                "proba": "585",
-                "is_featured": True,
+                "name": "Miss Dior parfyum suvi",
+                "description": "Gul notalariga boy ayollar atiri. Atirgul va peoniya ohanglari.",
+                "price": 1380000,
+                "category": "perfume", "brand": "dior",
+                "product_type": "perfume", "skin_type": "all",
+                "volume": "100 ml", "country_of_origin": "Fransiya",
+                "shelf_life_months": 60, "is_featured": False,
             },
             {
-                "name": "To'plam: uzuk + sirg'a",
-                "description": "Bir xil dizayndagi uzuk va sirg'a to'plami. 585 proba oltin, brilliant bilan.",
-                "price": 4500000,
-                "old_price": 5200000,
-                "category": "sets",
-                "metal_type": "gold",
-                "weight": 7.5,
-                "proba": "585",
-                "is_featured": True,
+                "name": "Garnier Fructis tiklovchi shampun",
+                "description": "Zaiflashgan sochlarni mustahkamlaydigan va tiklaydigan shampun.",
+                "price": 65000,
+                "category": "haircare", "brand": "garnier",
+                "product_type": "haircare", "skin_type": "all",
+                "volume": "400 ml", "country_of_origin": "Fransiya",
+                "shelf_life_months": 30, "is_featured": False,
             },
             {
-                "name": "Kumush uzuk 925",
-                "description": "925 proba kumush, zirkon tosh bilan. Arzon narxda sifatli zargarlik.",
-                "price": 450000,
-                "category": "rings",
-                "metal_type": "silver",
-                "weight": 4.0,
-                "size": "16-20",
-                "proba": "925",
-                "is_featured": False,
+                "name": "L'Oréal Elseve soch niqobi",
+                "description": "Quruq va shikastlangan sochlar uchun intensiv namlovchi niqob.",
+                "price": 78000, "old_price": 92000,
+                "category": "haircare", "brand": "loreal",
+                "product_type": "haircare", "skin_type": "all",
+                "volume": "300 ml", "country_of_origin": "Fransiya",
+                "shelf_life_months": 24, "is_featured": False,
             },
             {
-                "name": "Oq oltin uzuk",
-                "description": "750 proba oq oltin, safir tosh bilan. Premium segment.",
-                "price": 6500000,
-                "category": "rings",
-                "metal_type": "white_gold",
-                "weight": 4.5,
-                "size": "17",
-                "proba": "750",
-                "is_featured": True,
+                "name": "Nivea namlovchi tana suti",
+                "description": "Quruq teri uchun 48 soatlik namlik beruvchi tana suti.",
+                "price": 72000,
+                "category": "bodycare", "brand": "nivea",
+                "product_type": "bodycare", "skin_type": "dry",
+                "volume": "400 ml", "country_of_origin": "Germaniya",
+                "shelf_life_months": 36, "is_featured": True,
             },
             {
-                "name": "Erkaklar uchun zanjir",
-                "description": "585 proba oltin, bismark to'qish. Uzunligi 55sm.",
-                "price": 7800000,
-                "category": "necklaces",
-                "metal_type": "gold",
-                "weight": 15.0,
-                "proba": "585",
-                "is_featured": False,
+                "name": "Nivea Men yuz yuvish geli",
+                "description": "Erkaklar uchun teri tozalaydigan va tetiklashtiradigan gel.",
+                "price": 58000,
+                "category": "skincare", "brand": "nivea",
+                "product_type": "skincare", "skin_type": "normal",
+                "volume": "100 ml", "country_of_origin": "Germaniya",
+                "shelf_life_months": 24, "is_featured": False,
             },
         ]
 
         for prod_data in products_data:
-            category_slug = prod_data.pop("category")
-            category = categories.get(category_slug)
-
+            category = categories.get(prod_data.pop("category"))
+            brand = brands.get(prod_data.pop("brand"))
             if not category:
-                self.stdout.write(f"  Kategoriya topilmadi: {category_slug}")
                 continue
-
-            product, created = Product.objects.get_or_create(
+            Product.objects.get_or_create(
                 name=prod_data["name"],
-                defaults={**prod_data, "category": category}
+                defaults={**prod_data, "category": category, "brand": brand},
             )
-            status = "yaratildi" if created else "mavjud"
-            self.stdout.write(f"  Mahsulot: {product.name[:40]}... - {status}")
+            self.stdout.write(f"  Mahsulot: {prod_data['name'][:40]}...")
 
         self.stdout.write(self.style.SUCCESS(
             f"\nMuvaffaqiyatli! {Category.objects.count()} kategoriya, "
-            f"{Product.objects.count()} mahsulot bazada."
+            f"{Brand.objects.count()} brend, {Product.objects.count()} mahsulot bazada."
         ))

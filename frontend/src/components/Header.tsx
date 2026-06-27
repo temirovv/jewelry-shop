@@ -50,9 +50,9 @@ export const Header = memo(function Header({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          <Sparkles className="w-5 h-5 text-amber-500" />
+          <Sparkles className="w-5 h-5 text-pink-500" />
           <h1 className="text-lg font-display font-bold tracking-tight">
-            <span className="gold-text">JEWELRY</span>
+            <span className="gold-text">GLORA</span>
           </h1>
         </motion.div>
 

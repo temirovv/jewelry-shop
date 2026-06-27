@@ -107,9 +107,9 @@ export const SidebarMenu = memo(function SidebarMenu({
                   className="flex items-center gap-2"
                   whileHover={{ scale: 1.02 }}
                 >
-                  <Sparkles className="w-6 h-6 text-amber-500" />
+                  <Sparkles className="w-6 h-6 text-pink-500" />
                   <span className="text-xl font-display font-bold gold-text">
-                    JEWELRY
+                    GLORA
                   </span>
                 </motion.div>
                 <motion.button

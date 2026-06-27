@@ -8,7 +8,7 @@
   --card-foreground: 20 14.3% 4.1%;
   --popover: 0 0% 100%;
   --popover-foreground: 20 14.3% 4.1%;
-  --primary: 43 74% 49%;
+  --primary: 336 78% 52%;
   --primary-foreground: 60 9.1% 97.8%;
   --secondary: 60 4.8% 95.9%;
   --secondary-foreground: 24 9.8% 10%;
@@ -31,7 +31,7 @@
   --card-foreground: 60 9.1% 97.8%;
   --popover: 20 14.3% 4.1%;
   --popover-foreground: 60 9.1% 97.8%;
-  --primary: 43 74% 49%;
+  --primary: 336 78% 52%;
   --primary-foreground: 20 14.3% 4.1%;
   --secondary: 12 6.5% 15.1%;
   --secondary-foreground: 60 9.1% 97.8%;
@@ -87,13 +87,13 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Premium gold gradient */
+/* Premium rose gradient */
 .gold-gradient {
-  background: linear-gradient(135deg, #f7d774 0%, #d4a855 50%, #b8860b 100%);
+  background: linear-gradient(135deg, #f9a8d4 0%, #ec4899 50%, #be185d 100%);
 }
 
 .gold-text {
-  background: linear-gradient(135deg, #f7d774 0%, #d4a855 50%, #b8860b 100%);
+  background: linear-gradient(135deg, #f9a8d4 0%, #ec4899 50%, #be185d 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

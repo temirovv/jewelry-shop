@@ -198,23 +198,28 @@ export const QuickViewModal = memo(function QuickViewModal({
 
                 {/* Specs */}
                 <div className="grid grid-cols-2 gap-3 mb-6">
-                  <div className="p-3 rounded-xl bg-muted/50">
-                    <p className="text-xs text-muted-foreground mb-0.5">Vazni</p>
-                    <p className="font-medium">{product.weight} gr</p>
-                  </div>
-                  <div className="p-3 rounded-xl bg-muted/50">
-                    <p className="text-xs text-muted-foreground mb-0.5">Metal</p>
-                    <p className="font-medium">
-                      {product.metal_type === "gold" ? "Oltin" :
-                       product.metal_type === "silver" ? "Kumush" :
-                       product.metal_type === "white_gold" ? "Oq oltin" : "Platina"}
-                      {product.proba ? ` ${product.proba}` : ""}
-                    </p>
-                  </div>
-                  {product.size && (
+                  {product.brand && (
                     <div className="p-3 rounded-xl bg-muted/50">
-                      <p className="text-xs text-muted-foreground mb-0.5">Razmer</p>
-                      <p className="font-medium">{product.size}</p>
+                      <p className="text-xs text-muted-foreground mb-0.5">Brend</p>
+                      <p className="font-medium">{product.brand.name}</p>
+                    </div>
+                  )}
+                  {product.volume && (
+                    <div className="p-3 rounded-xl bg-muted/50">
+                      <p className="text-xs text-muted-foreground mb-0.5">Hajmi</p>
+                      <p className="font-medium">{product.volume}</p>
+                    </div>
+                  )}
+                  {product.shade && (
+                    <div className="p-3 rounded-xl bg-muted/50">
+                      <p className="text-xs text-muted-foreground mb-0.5">Rang/ton</p>
+                      <p className="font-medium">{product.shade}</p>
+                    </div>
+                  )}
+                  {product.country_of_origin && (
+                    <div className="p-3 rounded-xl bg-muted/50">
+                      <p className="text-xs text-muted-foreground mb-0.5">Davlat</p>
+                      <p className="font-medium">{product.country_of_origin}</p>
                     </div>
                   )}
                 </div>

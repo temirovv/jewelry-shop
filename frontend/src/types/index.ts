@@ -16,10 +16,14 @@ export interface Product {
   old_price?: number;
   images: ProductImage[];
   category: Category;
-  metal_type: MetalType;
-  weight: number;
-  size?: string;
-  proba?: string;
+  brand?: Brand | null;
+  product_type: ProductType;
+  skin_type?: SkinType;
+  volume?: string;
+  shade?: string;
+  ingredients?: string;
+  shelf_life_months?: number | null;
+  country_of_origin?: string;
   in_stock: boolean;
   is_featured: boolean;
   created_at: string;
@@ -39,7 +43,31 @@ export interface Category {
   image?: string;
 }
 
-export type MetalType = "gold" | "silver" | "platinum" | "white_gold";
+export interface Brand {
+  id: number;
+  name: string;
+  slug: string;
+  logo?: string | null;
+  country?: string;
+  description?: string;
+  is_featured?: boolean;
+  products_count?: number;
+}
+
+export type ProductType =
+  | "skincare"
+  | "makeup"
+  | "perfume"
+  | "haircare"
+  | "bodycare";
+
+export type SkinType =
+  | "all"
+  | "dry"
+  | "oily"
+  | "combination"
+  | "normal"
+  | "sensitive";
 
 export interface CartItem {
   id: number;

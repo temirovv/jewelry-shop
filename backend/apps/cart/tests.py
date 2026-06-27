@@ -17,8 +17,8 @@ class CartModelTest(TestCase):
             name="Oltin uzuk",
             price=Decimal("1500000"),
             category=self.category,
-            metal_type="gold",
-            weight=Decimal("5.50"),
+            product_type="skincare",
+            volume="50 ml",
         )
 
     def test_cart_create(self):
@@ -55,8 +55,8 @@ class CartAPITest(TestCase):
             name="Oltin uzuk",
             price=Decimal("1500000"),
             category=self.category,
-            metal_type="gold",
-            weight=Decimal("5.50"),
+            product_type="skincare",
+            volume="50 ml",
             in_stock=True,
         )
 

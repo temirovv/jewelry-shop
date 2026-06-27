@@ -3,7 +3,9 @@ import type { Product, Category, PaginatedResponse } from "../../types";
 
 export interface ProductFilters {
   category?: string;
-  metal_type?: string;
+  brand?: string;
+  product_type?: string;
+  skin_type?: string;
   min_price?: number;
   max_price?: number;
   search?: string;

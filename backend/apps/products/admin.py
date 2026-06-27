@@ -6,15 +6,15 @@ from unfold.contrib.import_export.forms import ExportForm, ImportForm
 from unfold.decorators import display, action
 from import_export import resources
 from import_export.admin import ImportExportModelAdmin
-from .models import Banner, Category, Product, ProductImage
+from .models import Banner, Brand, Category, Product, ProductImage
 
 
 class ProductResource(resources.ModelResource):
     class Meta:
         model = Product
         fields = (
-            "id", "name", "price", "old_price", "category__name",
-            "metal_type", "weight", "size", "proba",
+            "id", "name", "price", "old_price", "category__name", "brand__name",
+            "product_type", "skin_type", "volume", "shade", "country_of_origin",
             "in_stock", "is_featured", "is_active", "created_at",
         )
         export_order = fields
@@ -64,9 +64,9 @@ class BannerAdmin(ModelAdmin):
             )
         return format_html(
             '<div class="rounded-lg flex items-center justify-center" '
-            'style="width: 80px; height: 40px; background: linear-gradient(135deg, #f59e0b, #d97706);">'
+            'style="width: 80px; height: 40px; background: linear-gradient(135deg, #ec4899, #be185d);">'
             '<span style="color: white; font-size: 18px;">{}</span></div>',
-            obj.emoji or "💎",
+            obj.emoji or "💄",
         )
 
     @display(description="Link")
@@ -148,6 +148,75 @@ class CategoryAdmin(ModelAdmin):
         return obj.is_active
 
 
+@admin.register(Brand)
+class BrandAdmin(ModelAdmin):
+    list_display = ["display_logo", "name", "country", "display_products_count", "order", "display_status"]
+    list_display_links = ["display_logo", "name"]
+    list_editable = ["order"]
+    prepopulated_fields = {"slug": ("name",)}
+    ordering = ["order", "name"]
+    search_fields = ["name", "country"]
+    list_filter = ["is_featured", "is_active"]
+    list_filter_submit = True
+    readonly_fields = ["logo_preview", "created_at"]
+
+    fieldsets = (
+        ("Asosiy", {
+            "fields": ("name", "slug", "country", "description"),
+            "classes": ["tab"],
+        }),
+        ("Logo", {
+            "fields": ("logo", "logo_preview"),
+            "classes": ["tab"],
+        }),
+        ("Sozlamalar", {
+            "fields": ("is_featured", "is_active", "order", "created_at"),
+            "classes": ["tab"],
+        }),
+    )
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).annotate(products_count=Count("products"))
+
+    @display(description="Logo")
+    def display_logo(self, obj):
+        if obj.logo:
+            return format_html(
+                '<img src="{}" class="rounded-lg shadow-sm" '
+                'style="width: 48px; height: 48px; object-fit: contain; background:#fff;" />',
+                obj.logo.url,
+            )
+        return format_html(
+            '<div class="flex items-center justify-center w-12 h-12 bg-pink-100 rounded-lg">'
+            '<span class="text-pink-600 font-semibold">{}</span></div>',
+            (obj.name[:2].upper() if obj.name else "?"),
+        )
+
+    @display(description="Mahsulotlar", ordering="products_count")
+    def display_products_count(self, obj):
+        count = getattr(obj, "products_count", 0)
+        if count > 0:
+            return format_html(
+                '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">{} ta</span>',
+                count,
+            )
+        return format_html('<span class="text-gray-400">0</span>')
+
+    @display(description="Holat", label={True: "success", False: "danger"})
+    def display_status(self, obj):
+        return obj.is_active
+
+    @display(description="Logo ko'rinishi")
+    def logo_preview(self, obj):
+        if obj.logo:
+            return format_html(
+                '<img src="{}" class="rounded-xl shadow-md" '
+                'style="max-width: 200px; max-height: 120px; object-fit: contain;" />',
+                obj.logo.url,
+            )
+        return format_html('<span class="text-gray-400">Logo yuklanmagan</span>')
+
+
 @admin.register(Product)
 class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
     import_form_class = ImportForm
@@ -156,17 +225,18 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
     list_display = [
         "display_image",
         "name",
+        "brand",
         "category",
-        "display_metal",
+        "display_type",
         "display_price",
-        "display_weight",
+        "display_volume",
         "in_stock",
         "is_featured",
         "created_at",
     ]
     list_display_links = ["display_image", "name"]
-    list_filter = ["category", "metal_type", "in_stock", "is_featured", "created_at"]
-    search_fields = ["name", "description"]
+    list_filter = ["category", "brand", "product_type", "skin_type", "in_stock", "is_featured", "created_at"]
+    search_fields = ["name", "description", "brand__name"]
     list_editable = ["in_stock", "is_featured"]
     list_filter_submit = True
     inlines = [ProductImageInline]
@@ -178,7 +248,7 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
 
     fieldsets = (
         (None, {
-            "fields": ("name", "description", "category"),
+            "fields": ("name", "description", "category", "brand"),
             "classes": ["tab"],
         }),
         ("Narx", {
@@ -186,7 +256,7 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
             "classes": ["tab"],
         }),
         ("Xususiyatlar", {
-            "fields": ("metal_type", "weight", "size", "proba"),
+            "fields": ("product_type", "skin_type", "volume", "shade", "ingredients", "shelf_life_months", "country_of_origin"),
             "classes": ["tab"],
         }),
         ("Holat", {
@@ -200,16 +270,17 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
     )
 
     @display(
-        description="Metall",
+        description="Tur",
         label={
-            "gold": "warning",
-            "silver": "secondary",
-            "platinum": "info",
-            "white_gold": "primary",
+            "skincare": "info",
+            "makeup": "primary",
+            "perfume": "warning",
+            "haircare": "secondary",
+            "bodycare": "success",
         },
     )
-    def display_metal(self, obj):
-        return obj.metal_type
+    def display_type(self, obj):
+        return obj.get_product_type_display()
 
     @display(description="Rasm")
     def display_image(self, obj):
@@ -224,8 +295,8 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
                 main_image.image.url,
             )
         return format_html(
-            '<div class="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-lg">'
-            '<span class="text-amber-600">💎</span></div>'
+            '<div class="flex items-center justify-center w-12 h-12 bg-pink-100 rounded-lg">'
+            '<span class="text-pink-600">💄</span></div>'
         )
 
     @display(description="Narx", ordering="price")
@@ -245,12 +316,12 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
             price_formatted
         )
 
-    @display(description="Og'irlik")
-    def display_weight(self, obj):
-        if obj.weight:
+    @display(description="Hajm")
+    def display_volume(self, obj):
+        if obj.volume:
             return format_html(
-                '<span class="text-gray-600">{} gr</span>',
-                obj.weight
+                '<span class="text-gray-600">{}</span>',
+                obj.volume
             )
         return "—"
 
@@ -288,5 +359,5 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
         self.message_user(request, f"{queryset.count()} ta mahsulot maxsusdan chiqarildi.")
 
     def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related("images")
+        return super().get_queryset(request).select_related("brand", "category").prefetch_related("images")
 
