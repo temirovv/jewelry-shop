@@ -36,3 +36,28 @@ class TelegramUser(models.Model):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}".strip()
+
+
+class Favorite(models.Model):
+    """Foydalanuvchining yoqtirgan mahsuloti."""
+
+    user = models.ForeignKey(
+        TelegramUser,
+        on_delete=models.CASCADE,
+        related_name="favorites",
+    )
+    product = models.ForeignKey(
+        "products.Product",
+        on_delete=models.CASCADE,
+        related_name="favorited_by",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Sevimli"
+        verbose_name_plural = "Sevimlilar"
+        unique_together = [("user", "product")]
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.user.full_name} ♥ {self.product.name}"

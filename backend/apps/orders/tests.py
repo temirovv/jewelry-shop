@@ -5,6 +5,7 @@ from rest_framework.test import APIClient
 from apps.users.models import TelegramUser
 from apps.products.models import Category, Product
 from apps.orders.models import Order, OrderItem
+from apps.delivery.models import Region, DeliveryZone
 
 
 class OrderModelTest(TestCase):
@@ -103,3 +104,96 @@ class OrderAPITest(TestCase):
     def test_list_orders(self):
         response = self.client.get("/api/orders/")
         self.assertEqual(response.status_code, 200)
+
+    def test_create_order_invalid_phone(self):
+        response = self.client.post(
+            "/api/orders/",
+            {
+                "items": [{"product_id": self.product.id, "quantity": 1}],
+                "phone": "123",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_order_stock_out(self):
+        self.product.in_stock = False
+        self.product.save()
+        response = self.client.post(
+            "/api/orders/",
+            {
+                "items": [{"product_id": self.product.id, "quantity": 1}],
+                "phone": "+998901234567",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("sotuvda yo'q", response.data["error"])
+
+    def test_create_order_empty_items(self):
+        response = self.client.post(
+            "/api/orders/",
+            {"items": [], "phone": "+998901234567"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_order_missing_product(self):
+        response = self.client.post(
+            "/api/orders/",
+            {
+                "items": [{"product_id": 99999, "quantity": 1}],
+                "phone": "+998901234567",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_create_order_with_delivery_zone(self):
+        region = Region.objects.create(name="Test viloyat")
+        zone = DeliveryZone.objects.create(
+            region=region,
+            name="Test zona",
+            fee=Decimal("50000"),
+            free_threshold=Decimal("2000000"),
+        )
+        response = self.client.post(
+            "/api/orders/",
+            {
+                "items": [{"product_id": self.product.id, "quantity": 1}],
+                "phone": "+998901234567",
+                "delivery_zone_id": zone.id,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Decimal(response.data["delivery_fee"]), Decimal("50000"))
+
+    def test_create_order_free_delivery_over_threshold(self):
+        region = Region.objects.create(name="Test viloyat")
+        zone = DeliveryZone.objects.create(
+            region=region,
+            name="Test zona",
+            fee=Decimal("50000"),
+            free_threshold=Decimal("1000000"),
+        )
+        response = self.client.post(
+            "/api/orders/",
+            {
+                "items": [{"product_id": self.product.id, "quantity": 1}],
+                "phone": "+998901234567",
+                "delivery_zone_id": zone.id,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(Decimal(response.data["delivery_fee"]), Decimal("0"))
+
+    def test_order_detail_only_own(self):
+        """Foydalanuvchi faqat o'zinikini ko'ra oladi."""
+        other_user = TelegramUser.objects.create(
+            telegram_id=777, first_name="Other"
+        )
+        other_order = Order.objects.create(user=other_user, phone="+998900000000")
+        response = self.client.get(f"/api/orders/{other_order.id}/")
+        self.assertEqual(response.status_code, 404)

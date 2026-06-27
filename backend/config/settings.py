@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.products",
     "apps.orders",
     "apps.cart",
+    "apps.delivery",
 ]
 
 MIDDLEWARE = [
@@ -278,6 +279,16 @@ UNFOLD = {
                         "icon": "shopping_bag",
                         "link": "/admin/cart/cart/",
                     },
+                    {
+                        "title": "Viloyatlar",
+                        "icon": "map",
+                        "link": "/admin/delivery/region/",
+                    },
+                    {
+                        "title": "Yetkazish zonalari",
+                        "icon": "local_shipping",
+                        "link": "/admin/delivery/deliveryzone/",
+                    },
                 ],
             },
             {
@@ -290,6 +301,11 @@ UNFOLD = {
                         "icon": "group",
                         "link": "/admin/users/telegramuser/",
                         "badge": "apps.users.utils.get_users_count",
+                    },
+                    {
+                        "title": "Sevimlilar",
+                        "icon": "favorite",
+                        "link": "/admin/users/favorite/",
                     },
                     {
                         "title": "Admin Users",

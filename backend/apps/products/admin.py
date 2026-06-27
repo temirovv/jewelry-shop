@@ -213,21 +213,16 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
 
     @display(description="Rasm")
     def display_image(self, obj):
-        # prefetch_related dan foydalanish — alohida query qilmaydi
         images = list(obj.images.all())
-        main_image = next((i for i in images if i.is_main), None) or (images[0] if images else None)
-        if main_image:
-            image_url = None
-            if main_image.image:
-                image_url = main_image.image.url
-            elif main_image.image_url:
-                image_url = main_image.image_url
-
-            if image_url:
-                return format_html(
-                    '<img src="{}" class="rounded-lg shadow-sm" style="width: 50px; height: 50px; object-fit: cover;" />',
-                    image_url
-                )
+        main_image = next((i for i in images if i.is_main), None) or (
+            images[0] if images else None
+        )
+        if main_image and main_image.image:
+            return format_html(
+                '<img src="{}" class="rounded-lg shadow-sm" '
+                'style="width: 50px; height: 50px; object-fit: cover;" />',
+                main_image.image.url,
+            )
         return format_html(
             '<div class="flex items-center justify-center w-12 h-12 bg-amber-100 rounded-lg">'
             '<span class="text-amber-600">💎</span></div>'

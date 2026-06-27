@@ -20,6 +20,7 @@ import { Badge } from "../components/ui/badge";
 import { Skeleton } from "../components/ui/skeleton";
 import { SectionHeader } from "../components/SectionHeader";
 import { ProductScroller } from "../components/ProductScroller";
+import { ProductImageGallery } from "../components/ProductImageGallery";
 import { useCartStore } from "../stores/cartStore";
 import { useFavoritesStore } from "../stores/favoritesStore";
 import { useTelegram } from "../hooks/useTelegram";
@@ -35,9 +36,7 @@ export function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [isZoomed, setIsZoomed] = useState(false);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
   const addItem = useCartStore((state) => state.addItem);
@@ -81,11 +80,6 @@ export function ProductDetailPage() {
     }
   }, [product?.category?.slug, product?.id]);
 
-  // Reset zoom on image change
-  useEffect(() => {
-    setIsZoomed(false);
-  }, [currentImageIndex]);
-
   const handleAddToCart = () => {
     if (!product) return;
     addItem(product, quantity);
@@ -114,22 +108,6 @@ export function ProductDetailPage() {
     } catch {
       toast.info("Ulashish imkonsiz");
     }
-  };
-
-  const nextImage = () => {
-    if (!product) return;
-    setCurrentImageIndex((prev) =>
-      prev === product.images.length - 1 ? 0 : prev + 1
-    );
-    hapticFeedback?.selectionChanged?.();
-  };
-
-  const prevImage = () => {
-    if (!product) return;
-    setCurrentImageIndex((prev) =>
-      prev === 0 ? product.images.length - 1 : prev - 1
-    );
-    hapticFeedback?.selectionChanged?.();
   };
 
   if (isLoading) {
@@ -192,102 +170,49 @@ export function ProductDetailPage() {
     },
   ];
 
+  const topOverlay = (
+    <>
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
+      >
+        <ArrowLeft className="w-5 h-5" />
+      </button>
+
+      <div className="absolute top-4 right-4 z-10 flex gap-2">
+        <button
+          onClick={handleToggleFavorite}
+          className="w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
+        >
+          <Heart
+            className={`w-5 h-5 ${
+              isInFavorites ? "fill-red-500 text-red-500" : ""
+            }`}
+          />
+        </button>
+        <button
+          onClick={handleShare}
+          className="w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
+        >
+          <Share2 className="w-5 h-5" />
+        </button>
+      </div>
+
+      {discountPercent > 0 && (
+        <Badge className="absolute top-4 left-16 bg-red-500 text-white z-10">
+          -{discountPercent}%
+        </Badge>
+      )}
+    </>
+  );
+
   return (
     <div className="min-h-screen bg-background pb-32">
-      {/* Image Gallery */}
-      <div className="relative aspect-square bg-muted overflow-hidden">
-        {/* Back button */}
-        <button
-          onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </button>
-
-        {/* Action buttons */}
-        <div className="absolute top-4 right-4 z-10 flex gap-2">
-          <button
-            onClick={handleToggleFavorite}
-            className="w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
-          >
-            <Heart
-              className={`w-5 h-5 ${
-                isInFavorites ? "fill-red-500 text-red-500" : ""
-              }`}
-            />
-          </button>
-          <button
-            onClick={handleShare}
-            className="w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
-          >
-            <Share2 className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Main Image with swipe & zoom */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentImageIndex}
-            drag={!isZoomed ? "x" : false}
-            dragConstraints={{ left: 0, right: 0 }}
-            dragElastic={0.15}
-            onDragEnd={(_, info) => {
-              if (info.offset.x > 50) prevImage();
-              else if (info.offset.x < -50) nextImage();
-            }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="w-full h-full cursor-grab active:cursor-grabbing"
-          >
-            <motion.img
-              src={product.images[currentImageIndex]?.image || "/placeholder.svg"}
-              alt={product.name}
-              className="w-full h-full object-cover select-none"
-              animate={{ scale: isZoomed ? 2 : 1 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              onDoubleClick={() => setIsZoomed(!isZoomed)}
-              style={{
-                cursor: isZoomed ? "zoom-out" : "zoom-in",
-                transformOrigin: "center center",
-              }}
-              draggable={false}
-            />
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Image counter */}
-        {product.images.length > 1 && (
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-sm text-white text-xs font-medium">
-            {currentImageIndex + 1} / {product.images.length}
-          </div>
-        )}
-
-        {/* Image indicators — premium style */}
-        {product.images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
-            {product.images.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentImageIndex(index)}
-                className={`h-2.5 rounded-full transition-all duration-300 ${
-                  index === currentImageIndex
-                    ? "w-8 gold-gradient shadow-md"
-                    : "w-2.5 bg-white/60 backdrop-blur-sm"
-                }`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Discount badge */}
-        {discountPercent > 0 && (
-          <Badge className="absolute top-4 left-16 bg-red-500 text-white">
-            -{discountPercent}%
-          </Badge>
-        )}
-      </div>
+      <ProductImageGallery
+        images={product.images}
+        alt={product.name}
+        topOverlay={topOverlay}
+      />
 
       {/* Product Info */}
       <div className="p-4 space-y-5">

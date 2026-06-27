@@ -9,6 +9,7 @@ export interface CreateOrderData {
   }[];
   phone: string;
   delivery_address?: string;
+  delivery_zone_id?: number | null;
   comment?: string;
   payment_method: PaymentMethod;
 }

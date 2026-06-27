@@ -101,11 +101,8 @@ class Product(models.Model):
         main = self.images.filter(is_main=True).first()
         if not main:
             main = self.images.first()
-        if main:
-            if main.image:
-                return main.image.url
-            if main.image_url:
-                return main.image_url
+        if main and main.image:
+            return main.image.url
         return None
 
 
@@ -116,7 +113,6 @@ class ProductImage(models.Model):
         Product, on_delete=models.CASCADE, related_name="images"
     )
     image = models.ImageField(upload_to="products/", blank=True, null=True)
-    image_url = models.URLField(blank=True, null=True, help_text="Tashqi rasm URL")
     is_main = models.BooleanField(default=False)
     order = models.PositiveIntegerField(default=0)
 

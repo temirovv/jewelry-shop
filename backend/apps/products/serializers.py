@@ -24,13 +24,12 @@ class ProductImageSerializer(serializers.ModelSerializer):
         fields = ["id", "image", "is_main"]
 
     def get_image(self, obj):
-        """Return image URL - either from file or external URL"""
-        if obj.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.image.url)
-            return obj.image.url
-        return obj.image_url
+        if not obj.image:
+            return None
+        request = self.context.get("request")
+        if request:
+            return request.build_absolute_uri(obj.image.url)
+        return obj.image.url
 
 
 class ProductListSerializer(serializers.ModelSerializer):

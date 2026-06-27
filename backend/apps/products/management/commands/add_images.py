@@ -1,3 +1,8 @@
+from io import BytesIO
+from urllib.request import urlopen
+from urllib.parse import urlparse
+
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand
 from apps.products.models import Product, ProductImage
 
@@ -69,15 +74,21 @@ class Command(BaseCommand):
                 image_url = images[index]
                 category_images[category_slug] += 1
 
-                # Asosiy rasm qo'shish
-                ProductImage.objects.create(
-                    product=product,
-                    image_url=image_url,
-                    is_main=True,
-                    order=0,
-                )
+                try:
+                    with urlopen(image_url, timeout=10) as resp:
+                        content = resp.read()
+                except Exception as e:
+                    self.stdout.write(f"  - {product.name}: yuklab bo'lmadi ({e})")
+                    continue
+
+                filename = urlparse(image_url).path.split("/")[-1] or "image.jpg"
+                if "." not in filename:
+                    filename += ".jpg"
+
+                image_obj = ProductImage(product=product, is_main=True, order=0)
+                image_obj.image.save(filename, ContentFile(content), save=True)
                 images_added += 1
-                self.stdout.write(f"  + {product.name}: {image_url[:50]}...")
+                self.stdout.write(f"  + {product.name}: {filename}")
 
         self.stdout.write(
             self.style.SUCCESS(f"\n{images_added} ta rasm qo'shildi!")

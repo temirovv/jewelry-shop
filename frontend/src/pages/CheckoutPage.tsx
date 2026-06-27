@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -12,6 +12,7 @@ import {
   Package,
   Banknote,
   CreditCard,
+  Truck,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -19,9 +20,10 @@ import { useCartStore } from "../stores/cartStore";
 import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../stores/toastStore";
 import { createOrder, prepareOrderItems } from "../lib/api/orders";
+import { getRegions, calculateZoneFee } from "../lib/api/delivery";
 import { formatPrice } from "../lib/utils";
 import { calculateDeliveryFee } from "../lib/constants";
-import type { PaymentMethod } from "../types";
+import type { PaymentMethod, DeliveryRegion, DeliveryZone } from "../types";
 
 export function CheckoutPage() {
   const navigate = useNavigate();
@@ -38,6 +40,11 @@ export function CheckoutPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState<number | null>(null);
 
+  const [regions, setRegions] = useState<DeliveryRegion[]>([]);
+  const [regionId, setRegionId] = useState<number | null>(null);
+  const [zoneId, setZoneId] = useState<number | null>(null);
+  const [regionsLoading, setRegionsLoading] = useState(true);
+
   useEffect(() => {
     showBackButton(() => navigate(-1));
     return () => hideBackButton();
@@ -49,8 +56,49 @@ export function CheckoutPage() {
     }
   }, [items, isSuccess, navigate]);
 
+  useEffect(() => {
+    let cancelled = false;
+    getRegions()
+      .then((data) => {
+        if (cancelled) return;
+        setRegions(data);
+        if (data.length > 0) {
+          setRegionId(data[0].id);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) toast.error("Yetkazish ma'lumotlarini yuklab bo'lmadi");
+      })
+      .finally(() => !cancelled && setRegionsLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const currentRegion = useMemo(
+    () => regions.find((r) => r.id === regionId) || null,
+    [regions, regionId],
+  );
+  const currentZones: DeliveryZone[] = useMemo(
+    () => currentRegion?.zones || [],
+    [currentRegion],
+  );
+  const currentZone = currentZones.find((z) => z.id === zoneId) || null;
+
+  useEffect(() => {
+    if (currentZones.length > 0) {
+      if (!zoneId || !currentZones.some((z) => z.id === zoneId)) {
+        setZoneId(currentZones[0].id);
+      }
+    } else {
+      setZoneId(null);
+    }
+  }, [currentZones, zoneId]);
+
   const total = getTotal();
-  const deliveryFee = calculateDeliveryFee(total);
+  const deliveryFee = currentZone
+    ? calculateZoneFee(currentZone, total)
+    : calculateDeliveryFee(total);
   const grandTotal = total + deliveryFee;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,6 +117,12 @@ export function CheckoutPage() {
       return;
     }
 
+    if (regions.length > 0 && !zoneId) {
+      toast.error("Yetkazish zonasini tanlang");
+      hapticFeedback?.notificationOccurred?.("error");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -76,6 +130,7 @@ export function CheckoutPage() {
         items: prepareOrderItems(items),
         phone: phone.trim(),
         delivery_address: address.trim() || undefined,
+        delivery_zone_id: zoneId,
         comment: comment.trim() || undefined,
         payment_method: paymentMethod,
       });
@@ -265,11 +320,64 @@ export function CheckoutPage() {
 
           <div>
             <label className="text-sm font-medium mb-2 flex items-center gap-2">
+              <Truck className="w-4 h-4" />
+              Viloyat *
+            </label>
+            <select
+              value={regionId ?? ""}
+              onChange={(e) => setRegionId(Number(e.target.value))}
+              disabled={regionsLoading || regions.length === 0}
+              className="w-full h-12 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50"
+            >
+              {regionsLoading && <option>Yuklanmoqda...</option>}
+              {!regionsLoading && regions.length === 0 && (
+                <option>Ma'lumot yo'q</option>
+              )}
+              {regions.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {currentZones.length > 0 && (
+            <div>
+              <label className="text-sm font-medium mb-2 flex items-center gap-2">
+                <MapPin className="w-4 h-4" />
+                Tuman / Zona *
+              </label>
+              <select
+                value={zoneId ?? ""}
+                onChange={(e) => setZoneId(Number(e.target.value))}
+                className="w-full h-12 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                {currentZones.map((z) => {
+                  const fee = calculateZoneFee(z, total);
+                  const feeLabel = fee === 0 ? "Bepul" : `${formatPrice(fee)}`;
+                  return (
+                    <option key={z.id} value={z.id}>
+                      {z.name} — {feeLabel}
+                      {z.estimated_days ? ` · ${z.estimated_days}` : ""}
+                    </option>
+                  );
+                })}
+              </select>
+              {currentZone && currentZone.free_threshold > 0 && total < currentZone.free_threshold && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {formatPrice(currentZone.free_threshold - total)} qo'shsangiz — bepul yetkazib berish
+                </p>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label className="text-sm font-medium mb-2 flex items-center gap-2">
               <MapPin className="w-4 h-4" />
-              Yetkazib berish manzili
+              Manzil (ko'cha, uy, xonadon)
             </label>
             <Input
-              placeholder="Shahar, ko'cha, uy..."
+              placeholder="Ko'cha, uy, xonadon..."
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               className="h-12"

@@ -26,6 +26,14 @@ class Order(models.Model):
     )
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
     total = models.DecimalField(max_digits=12, decimal_places=0, default=0)
+    delivery_zone = models.ForeignKey(
+        "delivery.DeliveryZone",
+        on_delete=models.PROTECT,
+        related_name="orders",
+        null=True,
+        blank=True,
+        verbose_name="Yetkazish zonasi",
+    )
     delivery_fee = models.DecimalField(
         max_digits=12, decimal_places=0, default=0, verbose_name="Yetkazish narxi"
     )

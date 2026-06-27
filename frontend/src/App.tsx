@@ -6,6 +6,7 @@ import { HomePage } from "./pages/HomePage";
 import { useTelegram } from "./hooks/useTelegram";
 import { useCartStore } from "./stores/cartStore";
 import { useUserStore } from "./stores/userStore";
+import { useFavoritesStore } from "./stores/favoritesStore";
 import { ToastContainer } from "./components/Toast";
 import { OfflineBanner } from "./components/OfflineBanner";
 import { springs, pageSlideForward, pageSlideBack, pageVariants } from "./lib/animations";
@@ -195,6 +196,7 @@ function AppContent() {
   const { colorScheme, themeParams, isReady } = useTelegram();
   const syncWithBackend = useCartStore((state) => state.syncWithBackend);
   const fetchProfile = useUserStore((state) => state.fetchProfile);
+  const syncFavorites = useFavoritesStore((state) => state.syncWithBackend);
 
   useEffect(() => {
     if (colorScheme === "dark") {
@@ -204,13 +206,14 @@ function AppContent() {
     }
   }, [colorScheme]);
 
-  // Ilova yuklanganda savatni va profil ma'lumotlarini backend bilan sinxronlash
+  // Ilova yuklanganda savat, sevimlilar va profilni backend bilan sinxronlash
   useEffect(() => {
     if (isReady) {
       syncWithBackend();
+      syncFavorites();
       fetchProfile();
     }
-  }, [isReady, syncWithBackend, fetchProfile]);
+  }, [isReady, syncWithBackend, syncFavorites, fetchProfile]);
 
   useEffect(() => {
     if (themeParams) {

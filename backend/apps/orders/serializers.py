@@ -18,6 +18,7 @@ class OrderSerializer(serializers.ModelSerializer):
     payment_method_display = serializers.CharField(
         source="get_payment_method_display", read_only=True
     )
+    delivery_zone_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -26,6 +27,8 @@ class OrderSerializer(serializers.ModelSerializer):
             "status",
             "status_display",
             "total",
+            "delivery_zone",
+            "delivery_zone_name",
             "delivery_fee",
             "phone",
             "delivery_address",
@@ -36,7 +39,14 @@ class OrderSerializer(serializers.ModelSerializer):
             "items",
             "created_at",
         ]
-        read_only_fields = ["id", "status", "total", "delivery_fee", "is_paid", "created_at"]
+        read_only_fields = [
+            "id", "status", "total", "delivery_fee", "is_paid", "created_at",
+        ]
+
+    def get_delivery_zone_name(self, obj):
+        if obj.delivery_zone:
+            return f"{obj.delivery_zone.region.name} — {obj.delivery_zone.name}"
+        return None
 
 
 class CreateOrderSerializer(serializers.Serializer):
@@ -47,12 +57,34 @@ class CreateOrderSerializer(serializers.Serializer):
         min_length=1,
     )
     phone = serializers.CharField(max_length=20)
-    delivery_address = serializers.CharField(required=False, allow_blank=True)
-    comment = serializers.CharField(required=False, allow_blank=True)
+    delivery_address = serializers.CharField(
+        required=False, allow_blank=True, max_length=500
+    )
+    delivery_zone_id = serializers.IntegerField(required=False, allow_null=True)
+    comment = serializers.CharField(
+        required=False, allow_blank=True, max_length=500
+    )
     payment_method = serializers.ChoiceField(
         choices=["cash", "transfer"],
         default="cash",
     )
+
+    def validate_phone(self, value):
+        digits = "".join(ch for ch in value if ch.isdigit())
+        if len(digits) < 9 or len(digits) > 12:
+            raise serializers.ValidationError(
+                "Telefon raqam 9–12 ta raqamdan iborat bo'lishi kerak"
+            )
+        return value.strip()
+
+    def validate_delivery_zone_id(self, value):
+        if value is None:
+            return value
+        from apps.delivery.models import DeliveryZone
+
+        if not DeliveryZone.objects.filter(id=value, is_active=True).exists():
+            raise serializers.ValidationError("Yetkazish zonasi topilmadi")
+        return value
 
     def validate_items(self, value):
         from apps.products.models import Product

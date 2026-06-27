@@ -3,7 +3,7 @@ from django.utils.html import format_html
 from django.db.models import Count, Sum
 from unfold.admin import ModelAdmin
 from unfold.decorators import display, action
-from .models import TelegramUser
+from .models import TelegramUser, Favorite
 
 
 @admin.register(TelegramUser)
@@ -121,3 +121,39 @@ class TelegramUserAdmin(ModelAdmin):
     def deactivate_users(self, request, queryset):
         queryset.update(is_active=False)
         self.message_user(request, f"{queryset.count()} ta foydalanuvchi o'chirildi.")
+
+
+@admin.register(Favorite)
+class FavoriteAdmin(ModelAdmin):
+    list_display = ["display_user", "display_product", "created_at"]
+    list_filter = ["created_at"]
+    search_fields = [
+        "user__first_name",
+        "user__username",
+        "user__telegram_id",
+        "product__name",
+    ]
+    autocomplete_fields = ["user", "product"]
+    ordering = ["-created_at"]
+    list_per_page = 50
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related("user", "product")
+
+    @display(description="Foydalanuvchi")
+    def display_user(self, obj):
+        return format_html(
+            '<span class="font-medium">{}</span>'
+            '<br><span class="text-xs text-gray-400">@{}</span>',
+            obj.user.first_name or "Noma'lum",
+            obj.user.username or obj.user.telegram_id,
+        )
+
+    @display(description="Mahsulot")
+    def display_product(self, obj):
+        return format_html(
+            '<span class="font-medium">{}</span>'
+            '<br><span class="text-xs text-gray-400">{} so\'m</span>',
+            obj.product.name,
+            f"{int(obj.product.price):,}".replace(",", " "),
+        )

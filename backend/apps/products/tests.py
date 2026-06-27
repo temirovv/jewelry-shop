@@ -41,14 +41,13 @@ class ProductModelTest(TestCase):
     def test_main_image_none(self):
         self.assertIsNone(self.product.main_image)
 
-    def test_main_image_with_url_only(self):
-        """image_url bor, image yo'q — image_url qaytarishi kerak."""
+    def test_main_image_without_file(self):
+        """Agar image file yo'q bo'lsa, None qaytarishi kerak."""
         ProductImage.objects.create(
             product=self.product,
-            image_url="https://example.com/img.jpg",
             is_main=True,
         )
-        self.assertEqual(self.product.main_image, "https://example.com/img.jpg")
+        self.assertIsNone(self.product.main_image)
 
 
 class BannerModelTest(TestCase):

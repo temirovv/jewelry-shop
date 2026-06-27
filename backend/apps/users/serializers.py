@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import TelegramUser
+from .models import TelegramUser, Favorite
 
 
 class TelegramUserSerializer(serializers.ModelSerializer):
@@ -19,3 +19,13 @@ class TelegramUserSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "telegram_id", "created_at"]
+
+
+class FavoriteSerializer(serializers.ModelSerializer):
+    from apps.products.serializers import ProductListSerializer
+
+    product = ProductListSerializer(read_only=True)
+
+    class Meta:
+        model = Favorite
+        fields = ["id", "product", "created_at"]

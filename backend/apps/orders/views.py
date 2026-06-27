@@ -42,11 +42,25 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         try:
             with transaction.atomic():
+                # Yetkazish zonasi (ixtiyoriy)
+                delivery_zone = None
+                zone_id = data.get("delivery_zone_id")
+                if zone_id:
+                    from apps.delivery.models import DeliveryZone
+
+                    try:
+                        delivery_zone = DeliveryZone.objects.select_related(
+                            "region"
+                        ).get(id=zone_id, is_active=True)
+                    except DeliveryZone.DoesNotExist:
+                        raise ValueError("Yetkazish zonasi topilmadi")
+
                 # Buyurtma yaratish
                 order = Order.objects.create(
                     user=request.user,
                     phone=data["phone"],
                     delivery_address=data.get("delivery_address", ""),
+                    delivery_zone=delivery_zone,
                     comment=data.get("comment", ""),
                     payment_method=data.get("payment_method", "cash"),
                 )
@@ -54,9 +68,14 @@ class OrderViewSet(viewsets.ModelViewSet):
                 # Elementlarni qo'shish
                 items_total = Decimal("0")
                 for item_data in data["items"]:
-                    product = Product.objects.select_for_update().get(
-                        id=item_data["product_id"]
-                    )
+                    try:
+                        product = Product.objects.select_for_update().get(
+                            id=item_data["product_id"], is_active=True
+                        )
+                    except Product.DoesNotExist:
+                        raise ValueError(
+                            f"Mahsulot #{item_data['product_id']} topilmadi"
+                        )
 
                     if not product.in_stock:
                         raise ValueError(f"'{product.name}' sotuvda yo'q")
@@ -71,11 +90,14 @@ class OrderViewSet(viewsets.ModelViewSet):
                     items_total += product.price * item_data["quantity"]
 
                 # Yetkazish narxini hisoblash
-                delivery_fee = (
-                    Decimal("0")
-                    if items_total >= FREE_DELIVERY_THRESHOLD
-                    else DELIVERY_FEE
-                )
+                if delivery_zone:
+                    delivery_fee = Decimal(delivery_zone.calculate_fee(items_total))
+                else:
+                    delivery_fee = (
+                        Decimal("0")
+                        if items_total >= FREE_DELIVERY_THRESHOLD
+                        else DELIVERY_FEE
+                    )
                 order.delivery_fee = delivery_fee
                 order.total = items_total + delivery_fee
                 order.save(update_fields=["delivery_fee", "total"])

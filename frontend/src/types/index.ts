@@ -72,6 +72,8 @@ export interface Order {
   items: OrderItem[];
   total: number;
   delivery_fee: number;
+  delivery_zone?: number | null;
+  delivery_zone_name?: string | null;
   status: OrderStatus;
   status_display: string;
   delivery_address?: string;
@@ -81,6 +83,21 @@ export interface Order {
   payment_method_display: string;
   is_paid: boolean;
   created_at: string;
+}
+
+export interface DeliveryZone {
+  id: number;
+  region: number;
+  name: string;
+  fee: number;
+  free_threshold: number;
+  estimated_days: string;
+}
+
+export interface DeliveryRegion {
+  id: number;
+  name: string;
+  zones: DeliveryZone[];
 }
 
 export interface OrderItem {
