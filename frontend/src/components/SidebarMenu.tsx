@@ -11,9 +11,9 @@ import {
   Package,
   Phone,
   Info,
-  Sparkles,
   ChevronRight,
 } from "lucide-react";
+import { ZiyoraMark } from "./ZiyoraLogo";
 import { useTelegram } from "../hooks/useTelegram";
 import { useCartStore } from "../stores/cartStore";
 import { useFavoritesStore } from "../stores/favoritesStore";
@@ -107,7 +107,7 @@ export const SidebarMenu = memo(function SidebarMenu({
                   className="flex items-center gap-2"
                   whileHover={{ scale: 1.02 }}
                 >
-                  <Sparkles className="w-6 h-6 text-pink-500" />
+                  <ZiyoraMark className="w-6 h-6" />
                   <span className="text-xl font-display font-bold gold-text">
                     ZIYORA
                   </span>

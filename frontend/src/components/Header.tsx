@@ -1,8 +1,9 @@
 import { memo } from "react";
 import { motion } from "framer-motion";
-import { ShoppingBag, Search, Menu, Sparkles } from "lucide-react";
+import { ShoppingBag, Search, Menu } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
+import { ZiyoraMark } from "./ZiyoraLogo";
 import { useCartStore } from "../stores/cartStore";
 
 interface HeaderProps {
@@ -50,7 +51,7 @@ export const Header = memo(function Header({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
-          <Sparkles className="w-5 h-5 text-pink-500" />
+          <ZiyoraMark className="w-5 h-5" />
           <h1 className="text-lg font-display font-bold tracking-tight">
             <span className="gold-text">ZIYORA</span>
           </h1>

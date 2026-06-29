@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="ziyoraBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fb7fb8"/>
+      <stop offset="0.5" stop-color="#ec4899"/>
+      <stop offset="1" stop-color="#be185d"/>
+    </linearGradient>
+    <radialGradient id="ziyoraGlow" cx="0.35" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="124" fill="url(#ziyoraBg)"/>
+  <rect width="512" height="512" rx="124" fill="url(#ziyoraGlow)"/>
+  <!-- Asosiy uchqun (ziyo / nur) -->
+  <path d="M256 96 Q256 256 408 256 Q256 256 256 416 Q256 256 104 256 Q256 256 256 96 Z" fill="#ffffff"/>
+  <!-- Kichik uchqun -->
+  <path d="M372 120 Q372 156 414 156 Q372 156 372 192 Q372 156 330 156 Q372 156 372 120 Z" fill="#ffffff" opacity="0.92"/>
+</svg>
