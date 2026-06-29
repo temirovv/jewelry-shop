@@ -52,7 +52,7 @@ export const Header = memo(function Header({
         >
           <Sparkles className="w-5 h-5 text-pink-500" />
           <h1 className="text-lg font-display font-bold tracking-tight">
-            <span className="gold-text">GLORA</span>
+            <span className="gold-text">ZIYORA</span>
           </h1>
         </motion.div>
 

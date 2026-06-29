@@ -109,7 +109,7 @@ export const SidebarMenu = memo(function SidebarMenu({
                 >
                   <Sparkles className="w-6 h-6 text-pink-500" />
                   <span className="text-xl font-display font-bold gold-text">
-                    GLORA
+                    ZIYORA
                   </span>
                 </motion.div>
                 <motion.button

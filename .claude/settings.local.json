@@ -74,7 +74,8 @@
       "Bash(python manage.py test)",
       "Bash(npx tsc *)",
       "Bash(python manage.py test apps.orders apps.cart apps.users)",
-      "Bash(venv/Scripts/python.exe *)"
+      "Bash(venv/Scripts/python.exe *)",
+      "WebFetch(domain:www.instagram.com)"
     ],
     "deny": [],
     "ask": []
