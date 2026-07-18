@@ -42,8 +42,8 @@ if [ -f "$PROJECT_DIR/$ENV_FILE" ]; then
     DOMAIN=$(grep -E '^DOMAIN=' "$PROJECT_DIR/$ENV_FILE" | cut -d'=' -f2 | tr -d ' ')
 fi
 DB_USER="${DB_USER:-postgres}"
-DB_NAME="${DB_NAME:-jewelry_db}"
-DOMAIN="${DOMAIN:-luxgold.uz}"
+DB_NAME="${DB_NAME:-ziyora_db}"
+DOMAIN="${DOMAIN:-ziyora.uz}"
 
 log() { echo -e "\n\033[1;36m==> $1\033[0m"; }
 ok()  { echo -e "\033[1;32m✓ $1\033[0m"; }
@@ -360,7 +360,7 @@ cmd_help() {
     echo "Environments: production (default), staging"
     echo ""
     echo ".env dan o'qiladigan sozlamalar:"
-    echo "  DOMAIN       Domen nomi (default: luxgold.uz)"
+    echo "  DOMAIN       Domen nomi (default: ziyora.uz)"
     echo "  DB_USER      Database user (default: postgres)"
     echo "  DB_NAME      Database nomi (default: jewelry_db)"
     echo ""

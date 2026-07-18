@@ -190,9 +190,9 @@ ADMIN_IDS = [int(x) for x in os.getenv("ADMIN_IDS", "").split(",") if x.strip()]
 
 # Unfold Admin Configuration
 UNFOLD = {
-    "SITE_TITLE": "Jewelry Shop",
-    "SITE_HEADER": "Jewelry Shop Admin",
-    "SITE_SUBHEADER": "Premium Zargarlik Do'koni",
+    "SITE_TITLE": "Ziyora",
+    "SITE_HEADER": "Ziyora Admin",
+    "SITE_SUBHEADER": "Kosmetika Marketplace",
     "SITE_DROPDOWN": [
         {
             "icon": "storefront",
@@ -200,7 +200,7 @@ UNFOLD = {
             "link": "/",
         },
     ],
-    "SITE_SYMBOL": "diamond",
+    "SITE_SYMBOL": "spa",
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": True,
     "ENVIRONMENT": "config.settings.environment_callback",
@@ -238,6 +238,11 @@ UNFOLD = {
                         "icon": "dashboard",
                         "link": "/admin/",
                     },
+                    {
+                        "title": "Moliyaviy hisobot",
+                        "icon": "monitoring",
+                        "link": "/admin/hisobot/",
+                    },
                 ],
             },
             {
@@ -247,9 +252,14 @@ UNFOLD = {
                 "items": [
                     {
                         "title": "Mahsulotlar",
-                        "icon": "diamond",
+                        "icon": "spa",
                         "link": "/admin/products/product/",
                         "badge": "apps.products.utils.get_products_count",
+                    },
+                    {
+                        "title": "Brendlar",
+                        "icon": "loyalty",
+                        "link": "/admin/products/brand/",
                     },
                     {
                         "title": "Kategoriyalar",

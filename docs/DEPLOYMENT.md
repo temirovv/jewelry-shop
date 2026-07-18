@@ -1,4 +1,4 @@
-# Deploy Guide — luxgold.uz
+# Deploy Guide — ziyora.uz
 
 ## 1-QADAM: Server tayyorlash
 
@@ -28,11 +28,11 @@ sudo ufw enable
 Domen provayderingiz panelida:
 
 ```
-A    luxgold.uz        → SERVER_IP
-A    www.luxgold.uz    → SERVER_IP
+A    ziyora.uz        → SERVER_IP
+A    www.ziyora.uz    → SERVER_IP
 ```
 
-Tekshirish: `ping luxgold.uz`
+Tekshirish: `ping ziyora.uz`
 
 ---
 
@@ -85,7 +85,7 @@ nano .env
 ```env
 SECRET_KEY=juda-uzun-murakkab-kalit
 DEBUG=False
-ALLOWED_HOSTS=luxgold.uz,www.luxgold.uz
+ALLOWED_HOSTS=ziyora.uz,www.ziyora.uz
 
 DB_NAME=jewelry_db
 DB_USER=postgres
@@ -96,12 +96,12 @@ DB_PORT=5432
 TELEGRAM_BOT_TOKEN=your-bot-token
 BOT_TOKEN=your-bot-token
 ADMIN_IDS=your_telegram_id
-WEBAPP_URL=https://luxgold.uz
+WEBAPP_URL=https://ziyora.uz
 
-CORS_ALLOWED_ORIGINS=https://luxgold.uz,https://www.luxgold.uz
+CORS_ALLOWED_ORIGINS=https://ziyora.uz,https://www.ziyora.uz
 API_BASE_URL=http://backend:8000/api
 
-VITE_API_URL=https://luxgold.uz/api
+VITE_API_URL=https://ziyora.uz/api
 ```
 
 > SECRET_KEY: `python3 -c "import secrets; print(secrets.token_urlsafe(50))"`
@@ -142,18 +142,18 @@ docker compose -f docker-compose.prod.yml exec backend python manage.py createsu
 ```bash
 sudo rm -f /etc/nginx/sites-enabled/default
 
-sudo tee /etc/nginx/sites-available/luxgold > /dev/null <<'EOF'
+sudo tee /etc/nginx/sites-available/ziyora > /dev/null <<'EOF'
 server {
     listen 80;
-    server_name luxgold.uz www.luxgold.uz;
+    server_name ziyora.uz www.ziyora.uz;
     location / { proxy_pass http://127.0.0.1:8080; }
 }
 EOF
 
-sudo ln -sf /etc/nginx/sites-available/luxgold /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/ziyora /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl restart nginx
 
-sudo certbot --nginx -d luxgold.uz -d www.luxgold.uz
+sudo certbot --nginx -d ziyora.uz -d www.ziyora.uz
 ```
 
 ---
@@ -161,22 +161,22 @@ sudo certbot --nginx -d luxgold.uz -d www.luxgold.uz
 ## 9-QADAM: Nginx HTTPS config
 
 ```bash
-sudo nano /etc/nginx/sites-available/luxgold
+sudo nano /etc/nginx/sites-available/ziyora
 ```
 
 ```nginx
 server {
     listen 80;
-    server_name luxgold.uz www.luxgold.uz;
+    server_name ziyora.uz www.ziyora.uz;
     return 301 https://$host$request_uri;
 }
 
 server {
     listen 443 ssl http2;
-    server_name luxgold.uz www.luxgold.uz;
+    server_name ziyora.uz www.ziyora.uz;
 
-    ssl_certificate /etc/letsencrypt/live/luxgold.uz/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/luxgold.uz/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/ziyora.uz/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/ziyora.uz/privkey.pem;
     include /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 
@@ -201,9 +201,9 @@ sudo nginx -t && sudo systemctl restart nginx
 ## 10-QADAM: Tekshirish
 
 Brauzerda:
-- https://luxgold.uz — Frontend
-- https://luxgold.uz/api/products/ — API
-- https://luxgold.uz/admin/ — Admin panel
+- https://ziyora.uz — Frontend
+- https://ziyora.uz/api/products/ — API
+- https://ziyora.uz/admin/ — Admin panel
 
 ---
 
@@ -211,7 +211,7 @@ Brauzerda:
 
 1. @BotFather → `/mybots` → bot tanlash
 2. `Bot Settings` → `Menu Button` → `Configure menu button`
-3. URL: `https://luxgold.uz`, Text: `Do'kon`
+3. URL: `https://ziyora.uz`, Text: `Do'kon`
 
 ---
 

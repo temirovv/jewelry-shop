@@ -59,7 +59,6 @@ class FavoriteTest(TestCase):
         self.product = Product.objects.create(
             name="Oltin uzuk",
             price=1000000,
-            weight=3.5,
             category=self.category,
         )
 

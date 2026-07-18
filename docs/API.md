@@ -4,7 +4,7 @@
 
 ```
 Development: http://localhost:8000/api
-Production: https://your-domain.com/api
+Production: https://ziyora.uz/api
 ```
 
 ## Authentication
