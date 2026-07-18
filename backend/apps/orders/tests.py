@@ -56,6 +56,42 @@ class OrderModelTest(TestCase):
         self.assertEqual(order.payment_method, "cash")
         self.assertFalse(order.is_paid)
 
+    def test_order_item_freezes_cost_price(self):
+        """cost_price berilmasa, mahsulot tannarxidan avtomatik muzlatiladi."""
+        self.product.cost_price = Decimal("900000")
+        self.product.save()
+        order = Order.objects.create(user=self.user, phone="+998901234567")
+        item = OrderItem(order=order, product=self.product, quantity=1)
+        item.save()
+        self.assertEqual(item.cost_price, Decimal("900000"))
+
+    def test_order_item_profit(self):
+        """Foyda = (sotuv − tannarx) × miqdor."""
+        order = Order.objects.create(user=self.user, phone="+998901234567")
+        item = OrderItem.objects.create(
+            order=order,
+            product=self.product,
+            quantity=3,
+            price=Decimal("1500000"),
+            cost_price=Decimal("1000000"),
+        )
+        self.assertEqual(item.profit, Decimal("1500000"))
+
+    def test_cost_price_frozen_after_product_price_change(self):
+        """Buyurtmadagi tannarx keyingi mahsulot narx o'zgarishidan ta'sirlanmaydi."""
+        self.product.cost_price = Decimal("900000")
+        self.product.save()
+        order = Order.objects.create(user=self.user, phone="+998901234567")
+        item = OrderItem.objects.create(
+            order=order, product=self.product, quantity=1, price=Decimal("1500000"),
+            cost_price=self.product.cost_price,
+        )
+        # Mahsulot tannarxi keyin o'zgaradi
+        self.product.cost_price = Decimal("1200000")
+        self.product.save()
+        item.refresh_from_db()
+        self.assertEqual(item.cost_price, Decimal("900000"))
+
 
 class OrderAPITest(TestCase):
     """Order API testlari."""
@@ -90,6 +126,39 @@ class OrderAPITest(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["phone"], "+998901234567")
         self.assertEqual(len(response.data["items"]), 1)
+
+    def test_create_order_freezes_cost_price(self):
+        """Buyurtma yaratilganda tannarx muzlatiladi."""
+        self.product.cost_price = Decimal("1000000")
+        self.product.save()
+        response = self.client.post(
+            "/api/orders/",
+            {
+                "items": [{"product_id": self.product.id, "quantity": 2}],
+                "phone": "+998901234567",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        item = OrderItem.objects.get(order_id=response.data["id"])
+        self.assertEqual(item.cost_price, Decimal("1000000"))
+        self.assertEqual(item.profit, Decimal("1000000"))  # (1.5M − 1M) × 2
+
+    def test_cost_price_not_exposed_in_api(self):
+        """Mijozga tannarx API javobida ko'rinmasligi kerak."""
+        self.product.cost_price = Decimal("1000000")
+        self.product.save()
+        response = self.client.post(
+            "/api/orders/",
+            {
+                "items": [{"product_id": self.product.id, "quantity": 1}],
+                "phone": "+998901234567",
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertNotIn("cost_price", response.data["items"][0])
+        self.assertNotIn("cost_price", response.data["items"][0].get("product", {}))
 
     def test_create_order_no_phone(self):
         response = self.client.post(

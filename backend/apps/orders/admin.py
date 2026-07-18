@@ -29,9 +29,9 @@ class OrderResource(resources.ModelResource):
 class OrderItemInline(TabularInline):
     model = OrderItem
     extra = 0
-    readonly_fields = ["subtotal", "display_product"]
+    readonly_fields = ["subtotal", "display_product", "display_profit"]
     raw_id_fields = ["product"]
-    fields = ["display_product", "product", "quantity", "price", "size", "subtotal"]
+    fields = ["display_product", "product", "quantity", "price", "cost_price", "size", "subtotal", "display_profit"]
     tab = True
 
     @display(description="Mahsulot")
@@ -42,6 +42,14 @@ class OrderItemInline(TabularInline):
                 obj.product.name
             )
         return "—"
+
+    @display(description="Foyda")
+    def display_profit(self, obj):
+        if not obj.pk or not obj.cost_price:
+            return format_html('<span class="text-gray-400 text-xs">—</span>')
+        profit_formatted = "{:,.0f}".format(obj.profit).replace(",", " ")
+        color = "text-green-600" if obj.profit > 0 else "text-red-600"
+        return format_html('<span class="font-semibold {}">{} so\'m</span>', color, profit_formatted)
 
 
 @admin.register(Order)

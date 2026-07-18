@@ -75,6 +75,13 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     quantity = models.PositiveIntegerField(default=1, validators=[MaxValueValidator(99)])
     price = models.DecimalField(max_digits=12, decimal_places=0)
+    cost_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=0,
+        default=0,
+        verbose_name="Tannarx",
+        help_text="Buyurtma paytidagi tannarx (muzlatilgan)",
+    )
     size = models.CharField(max_length=50, blank=True)
 
     class Meta:
@@ -90,7 +97,16 @@ class OrderItem(models.Model):
             return 0
         return self.price * self.quantity
 
+    @property
+    def profit(self):
+        """Ushbu element bo'yicha yalpi foyda ((sotuv − tannarx) × miqdor)."""
+        if self.price is None or self.quantity is None:
+            return 0
+        return (self.price - (self.cost_price or 0)) * self.quantity
+
     def save(self, *args, **kwargs):
         if self.price is None:
             self.price = self.product.price
+        if not self.cost_price and self.product_id:
+            self.cost_price = self.product.cost_price
         super().save(*args, **kwargs)

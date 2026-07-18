@@ -13,7 +13,7 @@ class ProductResource(resources.ModelResource):
     class Meta:
         model = Product
         fields = (
-            "id", "name", "price", "old_price", "category__name", "brand__name",
+            "id", "name", "price", "old_price", "cost_price", "category__name", "brand__name",
             "product_type", "skin_type", "volume", "shade", "country_of_origin",
             "in_stock", "is_featured", "is_active", "created_at",
         )
@@ -229,6 +229,7 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
         "category",
         "display_type",
         "display_price",
+        "display_profit",
         "display_volume",
         "in_stock",
         "is_featured",
@@ -240,7 +241,7 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
     list_editable = ["in_stock", "is_featured"]
     list_filter_submit = True
     inlines = [ProductImageInline]
-    readonly_fields = ["created_at", "updated_at"]
+    readonly_fields = ["created_at", "updated_at", "unit_profit_display"]
     date_hierarchy = "created_at"
     list_per_page = 20
     save_on_top = True
@@ -252,7 +253,7 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
             "classes": ["tab"],
         }),
         ("Narx", {
-            "fields": ("price", "old_price"),
+            "fields": ("price", "old_price", "cost_price", "unit_profit_display"),
             "classes": ["tab"],
         }),
         ("Xususiyatlar", {
@@ -314,6 +315,34 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
         return format_html(
             '<span class="font-semibold">{} so\'m</span>',
             price_formatted
+        )
+
+    @display(description="Foyda", ordering="cost_price")
+    def display_profit(self, obj):
+        if not obj.cost_price:
+            return format_html('<span class="text-gray-400 text-xs">tannarx yo\'q</span>')
+        profit = obj.unit_profit
+        margin = int(profit / obj.price * 100) if obj.price else 0
+        color = "text-green-600" if profit > 0 else "text-red-600"
+        profit_formatted = "{:,.0f}".format(profit).replace(",", " ")
+        return format_html(
+            '<div><span class="font-semibold {}">{} so\'m</span>'
+            '<br><span class="text-xs text-gray-400">{}%</span></div>',
+            color, profit_formatted, margin,
+        )
+
+    @display(description="Bir dona foyda")
+    def unit_profit_display(self, obj):
+        if not obj.pk:
+            return format_html('<span class="text-gray-400">Saqlangandan keyin</span>')
+        if not obj.cost_price:
+            return format_html('<span class="text-gray-400">Tannarx kiritilmagan</span>')
+        profit = obj.unit_profit
+        margin = int(profit / obj.price * 100) if obj.price else 0
+        profit_formatted = "{:,.0f}".format(profit).replace(",", " ")
+        return format_html(
+            '<span class="font-semibold text-green-600">{} so\'m ({}%)</span>',
+            profit_formatted, margin,
         )
 
     @display(description="Hajm")

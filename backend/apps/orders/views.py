@@ -85,6 +85,7 @@ class OrderViewSet(viewsets.ModelViewSet):
                         product=product,
                         quantity=item_data["quantity"],
                         price=product.price,
+                        cost_price=product.cost_price,
                         size=item_data.get("size", ""),
                     )
                     items_total += product.price * item_data["quantity"]

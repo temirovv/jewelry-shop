@@ -103,6 +103,13 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=12, decimal_places=0)
     old_price = models.DecimalField(max_digits=12, decimal_places=0, blank=True, null=True)
+    cost_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=0,
+        default=0,
+        verbose_name="Tannarx",
+        help_text="Yetkazib beruvchidan olingan narx (foyda hisoblash uchun, mijozga ko'rinmaydi)",
+    )
 
     category = models.ForeignKey(
         Category, on_delete=models.PROTECT, related_name="products"
@@ -140,6 +147,13 @@ class Product(models.Model):
         if self.old_price and self.old_price > self.price:
             return int(((self.old_price - self.price) / self.old_price) * 100)
         return 0
+
+    @property
+    def unit_profit(self):
+        """Bitta dona uchun yalpi foyda (sotuv narxi − tannarx)."""
+        if not self.cost_price:
+            return self.price
+        return self.price - self.cost_price
 
     @property
     def main_image(self):
