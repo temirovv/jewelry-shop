@@ -1,0 +1,125 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+    .zr-wrap { max-width: 1100px; }
+    .zr-toolbar {
+        display: flex; flex-wrap: wrap; gap: .75rem; align-items: flex-end;
+        margin-bottom: 1.5rem;
+    }
+    .zr-presets { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .zr-chip {
+        padding: .4rem .85rem; border-radius: 9999px; font-size: .8rem;
+        border: 1px solid #e5e7eb; color: #374151; text-decoration: none;
+        background: #fff; transition: all .15s;
+    }
+    html.dark .zr-chip { background:#1e293b; border-color:#334155; color:#cbd5e1; }
+    .zr-chip:hover { border-color:#ec4899; color:#ec4899; }
+    .zr-chip.active { background:#ec4899; border-color:#ec4899; color:#fff; }
+    .zr-custom { display:flex; gap:.4rem; align-items:center; }
+    .zr-custom input {
+        padding:.35rem .5rem; border:1px solid #e5e7eb; border-radius:8px;
+        font-size:.8rem; background:#fff;
+    }
+    html.dark .zr-custom input { background:#0f172a; border-color:#334155; color:#e2e8f0; }
+    .zr-btn {
+        padding:.4rem .85rem; border-radius:8px; font-size:.8rem; cursor:pointer;
+        border:none; background:#ec4899; color:#fff; text-decoration:none;
+    }
+    .zr-btn.ghost { background:transparent; border:1px solid #ec4899; color:#ec4899; }
+    .zr-export { margin-left:auto; }
+    .zr-grid {
+        display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+        gap:1rem; margin-bottom:1.5rem;
+    }
+    .zr-card {
+        background:#fff; border:1px solid #e5e7eb; border-radius:14px; padding:1.25rem;
+    }
+    html.dark .zr-card { background:#1e293b; border-color:#334155; }
+    .zr-card .label { font-size:.75rem; color:#6b7280; text-transform:uppercase; letter-spacing:.03em; }
+    html.dark .zr-card .label { color:#94a3b8; }
+    .zr-card .value { font-size:1.6rem; font-weight:700; margin-top:.35rem; }
+    .zr-card .sub { font-size:.8rem; color:#9ca3af; margin-top:.15rem; }
+    .zr-card.profit .value { color:#16a34a; }
+    .zr-card.cogs .value { color:#dc2626; }
+    .zr-table { width:100%; border-collapse:collapse; margin-top:.5rem; }
+    .zr-table th, .zr-table td { text-align:left; padding:.6rem .75rem; border-bottom:1px solid #eef0f3; font-size:.85rem; }
+    html.dark .zr-table th, html.dark .zr-table td { border-color:#334155; }
+    .zr-table td.num, .zr-table th.num { text-align:right; font-variant-numeric:tabular-nums; }
+    .zr-section-title { font-weight:600; margin:1.25rem 0 .5rem; font-size:.95rem; }
+    .zr-note { font-size:.78rem; color:#9ca3af; margin-top:1.5rem; line-height:1.5; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="zr-wrap">
+    <h1 style="font-size:1.4rem;font-weight:700;margin-bottom:.25rem;">📊 Moliyaviy hisobot</h1>
+    <p style="color:#9ca3af;font-size:.85rem;margin-bottom:1.25rem;">{{ period_label }}</p>
+
+    <div class="zr-toolbar">
+        <div class="zr-presets">
+            <a class="zr-chip {% if period == 'this_month' %}active{% endif %}" href="?period=this_month">Shu oy</a>
+            <a class="zr-chip {% if period == 'last_month' %}active{% endif %}" href="?period=last_month">O'tgan oy</a>
+            <a class="zr-chip {% if period == 'last_7' %}active{% endif %}" href="?period=last_7">Oxirgi 7 kun</a>
+        </div>
+        <form method="get" class="zr-custom">
+            <input type="hidden" name="period" value="custom">
+            <input type="date" name="start" value="{{ report.start|date:'Y-m-d' }}">
+            <span style="color:#9ca3af;">—</span>
+            <input type="date" name="end" value="{{ report.end|date:'Y-m-d' }}">
+            <button type="submit" class="zr-btn ghost">Ko'rish</button>
+        </form>
+        <a class="zr-btn zr-export" href="?period={{ period }}&start={{ report.start|date:'Y-m-d' }}&end={{ report.end|date:'Y-m-d' }}&export=xlsx">⬇ Excel yuklab olish</a>
+    </div>
+
+    <div class="zr-grid">
+        <div class="zr-card">
+            <div class="label">Umumiy tushum</div>
+            <div class="value">{{ report.revenue|floatformat:0 }} <span style="font-size:1rem;">so'm</span></div>
+            <div class="sub">{{ report.orders_count }} ta buyurtma</div>
+        </div>
+        <div class="zr-card profit">
+            <div class="label">Yalpi foyda</div>
+            <div class="value">{{ report.gross_profit|floatformat:0 }}</div>
+            <div class="sub">margin {{ report.margin }}%</div>
+        </div>
+        <div class="zr-card cogs">
+            <div class="label">Tannarx (COGS)</div>
+            <div class="value">{{ report.cogs|floatformat:0 }}</div>
+            <div class="sub">mahsulot tushumi {{ report.product_revenue|floatformat:0 }}</div>
+        </div>
+        <div class="zr-card">
+            <div class="label">Yetkazish yig'imi</div>
+            <div class="value">{{ report.delivery_fees|floatformat:0 }}</div>
+            <div class="sub">so'm</div>
+        </div>
+    </div>
+
+    <div class="zr-section-title">To'lov usuli</div>
+    <table class="zr-table">
+        <thead><tr><th>Usul</th><th class="num">Soni</th><th class="num">Summa</th></tr></thead>
+        <tbody>
+            <tr><td>Naqd pul</td><td class="num">{{ report.cash.count }}</td><td class="num">{{ report.cash.revenue|floatformat:0 }} so'm</td></tr>
+            <tr><td>Karta o'tkazma</td><td class="num">{{ report.transfer.count }}</td><td class="num">{{ report.transfer.revenue|floatformat:0 }} so'm</td></tr>
+        </tbody>
+    </table>
+
+    <div class="zr-section-title">To'lov holati</div>
+    <table class="zr-table">
+        <thead><tr><th>Holat</th><th class="num">Soni</th><th class="num">Summa</th></tr></thead>
+        <tbody>
+            <tr><td>✅ To'langan</td><td class="num">{{ report.paid.count }}</td><td class="num">{{ report.paid.revenue|floatformat:0 }} so'm</td></tr>
+            <tr><td>⏳ To'lanmagan</td><td class="num">{{ report.unpaid.count }}</td><td class="num">{{ report.unpaid.revenue|floatformat:0 }} so'm</td></tr>
+            <tr><td>❌ Bekor qilingan</td><td class="num">{{ report.cancelled.count }}</td><td class="num">{{ report.cancelled.value|floatformat:0 }} so'm</td></tr>
+        </tbody>
+    </table>
+
+    <p class="zr-note">
+        ℹ️ Yalpi foyda = mahsulot tushumi − tannarx. Davr buyurtma sanasi bo'yicha olinadi.
+        Bekor qilingan buyurtmalar asosiy summalarga kirmaydi.<br>
+        Soliq foizi va xarajat jurnali (reklama, kuryer, komissiya) hali kiritilmagan — keyingi bosqichda qo'shiladi.
+    </p>
+</div>
+{% endblock %}
