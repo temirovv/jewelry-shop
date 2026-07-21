@@ -62,7 +62,7 @@ export const SidebarMenu = memo(function SidebarMenu({
   const handleAction = (action: string) => {
     hapticFeedback?.impactOccurred?.("light");
     if (action === "contact") {
-      window.open("https://t.me/jewelry_support", "_blank");
+      window.open("https://t.me/Age_Of_AI", "_blank");
     }
     onOpenChange(false);
   };

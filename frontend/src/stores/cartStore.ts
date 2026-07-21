@@ -164,7 +164,7 @@ export const useCartStore = create<CartState>()(
         get().items.reduce((count, item) => count + item.quantity, 0),
     }),
     {
-      name: "jewelry-cart",
+      name: "ziyora-cart",
       partialize: (state) => ({ items: state.items }),
     }
   )

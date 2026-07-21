@@ -91,7 +91,7 @@ export const useFavoritesStore = create<FavoritesState>()(
       },
     }),
     {
-      name: "jewelry-favorites",
+      name: "ziyora-favorites",
       partialize: (state) => ({ items: state.items }),
     },
   ),

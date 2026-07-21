@@ -13,11 +13,11 @@ async def cmd_start(message: Message):
     """Start buyrug'i"""
     await message.answer(
         f"✨ <b>Assalomu alaykum, {message.from_user.first_name}!</b>\n\n"
-        "🏆 <b>JEWELRY</b> - premium zargarlik buyumlari do'koniga xush kelibsiz!\n\n"
+        "💄 <b>ZIYORA</b> — kosmetika marketplace'iga xush kelibsiz!\n\n"
         "Bizda:\n"
-        "💎 Eng sifatli zargarlik buyumlari\n"
-        "🏷 O'rikzor narxlari\n"
-        "🎁 Premium qadoqlash\n"
+        "💄 Original kosmetika mahsulotlari\n"
+        "🌿 Teri va soch parvarishi\n"
+        "🏷 Qulay narxlar\n"
         "🚚 Tez yetkazib berish\n\n"
         "Do'konimizni ochish uchun quyidagi tugmani bosing 👇",
         reply_markup=get_main_keyboard(),

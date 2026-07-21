@@ -73,7 +73,7 @@ async def cb_help(callback: CallbackQuery):
 async def cb_back_to_main(callback: CallbackQuery):
     """Asosiy menyuga qaytish"""
     await callback.message.edit_text(
-        "✨ <b>JEWELRY</b> - premium zargarlik buyumlari\n\n"
+        "💄 <b>ZIYORA</b> — kosmetika marketplace\n\n"
         "Do'konimizni ochish uchun quyidagi tugmani bosing 👇",
         reply_markup=get_main_keyboard(),
     )
