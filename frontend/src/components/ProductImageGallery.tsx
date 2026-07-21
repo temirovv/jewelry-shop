@@ -172,15 +172,18 @@ function FullscreenViewer({
 }: FullscreenViewerProps) {
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const [prevIndex, setPrevIndex] = useState(index);
   const pinchStart = useRef<number | null>(null);
   const pinchStartScale = useRef(1);
   const count = images.length;
   const src = images[index]?.image || PLACEHOLDER;
 
-  useEffect(() => {
+  // Rasm almashganda zoom/pan holatini tiklash (render paytida — React tavsiyasi)
+  if (index !== prevIndex) {
+    setPrevIndex(index);
     setScale(1);
     setOffset({ x: 0, y: 0 });
-  }, [index]);
+  }
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.touches.length === 2) {
