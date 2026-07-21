@@ -144,3 +144,40 @@ class ProductAPITest(TestCase):
         Banner.objects.create(title="Test Banner")
         response = self.client.get("/api/banners/")
         self.assertEqual(response.status_code, 200)
+
+
+class ProductImportTest(TestCase):
+    """CSV/XLSX import — brend va kategoriya nom bo'yicha bog'lanadi."""
+
+    def setUp(self):
+        self.category = Category.objects.create(name="Makiyaj", slug="makiyaj")
+        self.brand = Brand.objects.create(name="TestBrand")
+
+    def test_import_resolves_fk_by_name_and_costs(self):
+        import tablib
+
+        from apps.products.admin import ProductResource
+
+        resource = ProductResource()
+        dataset = tablib.Dataset()
+        dataset.headers = [
+            "name", "description", "price", "old_price", "cost_price",
+            "category", "brand", "product_type", "skin_type", "volume",
+            "shade", "ingredients", "shelf_life_months", "country_of_origin",
+            "in_stock", "is_featured", "is_active",
+        ]
+        dataset.append([
+            "Matte lab bo'yog'i", "Matte lab", "150000", "", "100000",
+            "Makiyaj", "TestBrand", "makeup", "all", "5 ml",
+            "Nude 02", "Vitamin E", "24", "Koreya", "1", "1", "1",
+        ])
+
+        result = resource.import_data(dataset, dry_run=False)
+        self.assertFalse(result.has_errors())
+
+        product = Product.objects.get(name="Matte lab bo'yog'i")
+        self.assertEqual(product.category, self.category)
+        self.assertEqual(product.brand, self.brand)
+        self.assertEqual(product.price, Decimal("150000"))
+        self.assertEqual(product.cost_price, Decimal("100000"))
+        self.assertEqual(product.product_type, "makeup")
