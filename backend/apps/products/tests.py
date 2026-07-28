@@ -146,6 +146,41 @@ class ProductAPITest(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class ProductAdminFormTest(TestCase):
+    """Admin'da mahsulot qo'shish formasi to'liq render bo'lishi kerak.
+
+    Unfold nomsiz (None) fieldset'ni "tab" klassi bilan hech qayerda
+    chiqarmaydi — natijada majburiy maydonlar ko'rinmay qoladi va saqlashda
+    "Please correct the errors below" xatosi hech qaysi maydonga ishora
+    qilmaydi.
+    """
+
+    def setUp(self):
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        admin_user = User.objects.create_superuser(
+            username="test_admin", password="test_pass_12345"
+        )
+        self.client.force_login(admin_user)
+
+    def test_all_form_fields_rendered_on_add_page(self):
+        response = self.client.get("/admin/products/product/add/")
+        self.assertEqual(response.status_code, 200)
+
+        html = response.content.decode()
+        form = response.context["adminform"].form
+        missing = [name for name in form.fields if f'id_{name}"' not in html]
+        self.assertEqual(missing, [], f"Formada ko'rinmayotgan maydonlar: {missing}")
+
+    def test_every_fieldset_tab_has_a_name(self):
+        from apps.products.admin import ProductAdmin
+
+        for name, options in ProductAdmin.fieldsets:
+            if "tab" in options.get("classes", []):
+                self.assertTrue(name, "Tab fieldset nomsiz bo'lishi mumkin emas")
+
+
 class ProductImportTest(TestCase):
     """CSV/XLSX import — brend va kategoriya nom bo'yicha bog'lanadi."""
 

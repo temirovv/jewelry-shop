@@ -267,7 +267,7 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
     actions = ["duplicate_products", "mark_in_stock", "mark_out_of_stock", "mark_featured", "unmark_featured"]
 
     fieldsets = (
-        (None, {
+        ("Asosiy", {
             "fields": ("name", "description", "category", "brand"),
             "classes": ["tab"],
         }),
