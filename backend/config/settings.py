@@ -119,6 +119,12 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Reverse proxy (nginx) TLS'ni tugatadi va X-Forwarded-Proto yuboradi.
+# Busiz Django so'rovni HTTP deb biladi va build_absolute_uri() rasm/fayl
+# URL'larini http:// bilan yasaydi — HTTPS sahifada ular mixed content
+# sifatida bloklanadi.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
 # Default primary key
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

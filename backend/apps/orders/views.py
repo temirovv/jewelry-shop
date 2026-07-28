@@ -123,6 +123,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             logger.error(f"Notification yuborishda xatolik: {e}")
 
         return Response(
-            OrderSerializer(order).data,
+            OrderSerializer(order, context=self.get_serializer_context()).data,
             status=status.HTTP_201_CREATED,
         )
