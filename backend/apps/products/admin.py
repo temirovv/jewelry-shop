@@ -4,18 +4,37 @@ from django.db.models import Count
 from unfold.admin import ModelAdmin, TabularInline
 from unfold.contrib.import_export.forms import ExportForm, ImportForm
 from unfold.decorators import display, action
-from import_export import resources
+from import_export import fields, resources
 from import_export.admin import ImportExportModelAdmin
+from import_export.widgets import ForeignKeyWidget
 from .models import Banner, Brand, Category, Product, ProductImage
 
 
 class ProductResource(resources.ModelResource):
+    """Mahsulotlarni CSV/XLSX orqali import/export. Brend va kategoriya
+    NOM bo'yicha bog'lanadi (ular avval yaratilgan bo'lishi kerak)."""
+
+    category = fields.Field(
+        column_name="category",
+        attribute="category",
+        widget=ForeignKeyWidget(Category, field="name"),
+    )
+    brand = fields.Field(
+        column_name="brand",
+        attribute="brand",
+        widget=ForeignKeyWidget(Brand, field="name"),
+    )
+
     class Meta:
         model = Product
+        import_id_fields = ("name",)  # nom bo'yicha moslashtiriladi (id ustuni shart emas)
+        skip_unchanged = True
+        report_skipped = True
         fields = (
-            "id", "name", "price", "old_price", "cost_price", "category__name", "brand__name",
-            "product_type", "skin_type", "volume", "shade", "country_of_origin",
-            "in_stock", "is_featured", "is_active", "created_at",
+            "id", "name", "description", "price", "old_price", "cost_price",
+            "category", "brand", "product_type", "skin_type", "volume", "shade",
+            "ingredients", "shelf_life_months", "country_of_origin",
+            "in_stock", "is_featured", "is_active",
         )
         export_order = fields
 
@@ -248,7 +267,7 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
     actions = ["duplicate_products", "mark_in_stock", "mark_out_of_stock", "mark_featured", "unmark_featured"]
 
     fieldsets = (
-        (None, {
+        ("Asosiy", {
             "fields": ("name", "description", "category", "brand"),
             "classes": ["tab"],
         }),

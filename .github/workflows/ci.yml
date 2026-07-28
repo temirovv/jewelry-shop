@@ -54,7 +54,7 @@ jobs:
         run: |
           cd backend
           pip install -r requirements.txt
-          pip install ruff
+          pip install ruff==0.16.0
 
       - name: Lint with ruff
         run: |
@@ -129,7 +129,7 @@ jobs:
       - name: Lint with ruff
         run: |
           cd bot
-          pip install ruff
+          pip install ruff==0.16.0
           ruff check .
 
       - name: Syntax check
