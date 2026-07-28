@@ -17,6 +17,7 @@ import {
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { useCartStore } from "../stores/cartStore";
+import { useElementHeight } from "../hooks/useElementHeight";
 import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../stores/toastStore";
 import { createOrder, prepareOrderItems } from "../lib/api/orders";
@@ -44,6 +45,10 @@ export function CheckoutPage() {
   const [regionId, setRegionId] = useState<number | null>(null);
   const [zoneId, setZoneId] = useState<number | null>(null);
   const [regionsLoading, setRegionsLoading] = useState(true);
+
+  // Pastdagi fixed panel balandligi — kontent uning ostida qolib ketmasligi uchun
+  const { ref: bottomBarRef, height: bottomBarHeight } =
+    useElementHeight<HTMLDivElement>();
 
   useEffect(() => {
     showBackButton(() => navigate(-1));
@@ -252,7 +257,10 @@ export function CheckoutPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div
+      className="min-h-screen bg-background"
+      style={{ paddingBottom: bottomBarHeight ? bottomBarHeight + 16 : 128 }}
+    >
       {/* Header */}
       <div className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center gap-3 px-4 py-3">
@@ -473,7 +481,10 @@ export function CheckoutPage() {
       </div>
 
       {/* Bottom Price Bar */}
-      <div className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border/50 safe-area-bottom">
+      <div
+        ref={bottomBarRef}
+        className="fixed bottom-0 left-0 right-0 p-4 bg-background/80 backdrop-blur-xl border-t border-border/50 safe-area-bottom"
+      >
         <div className="space-y-2 mb-4">
           <div className="flex justify-between text-sm">
             <span className="text-muted-foreground">Mahsulotlar</span>
