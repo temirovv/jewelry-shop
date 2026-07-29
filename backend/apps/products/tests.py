@@ -181,6 +181,61 @@ class ProductAdminFormTest(TestCase):
                 self.assertTrue(name, "Tab fieldset nomsiz bo'lishi mumkin emas")
 
 
+class CostPriceOptionalTest(TestCase):
+    """Tannarx ixtiyoriy: bo'sh qoldirilsa 0 bo'lib saqlanishi kerak.
+
+    Maydon `null=False`, shuning uchun faqat `blank=True` yetarli emas —
+    bo'sh forma `None` beradi va saqlashda NOT NULL xatosi chiqadi.
+    """
+
+    def setUp(self):
+        self.category = Category.objects.create(name="Makiyaj", slug="makiyaj")
+
+    def test_cost_price_is_not_required_in_form(self):
+        from django.forms import modelform_factory
+
+        Form = modelform_factory(Product, fields=["name", "price", "category", "cost_price"])
+        self.assertFalse(Form().fields["cost_price"].required)
+
+    def test_empty_cost_price_saved_as_zero(self):
+        product = Product.objects.create(
+            name="Tannarxsiz", price=Decimal("120000"),
+            category=self.category, cost_price=None,
+        )
+        product.refresh_from_db()
+        self.assertEqual(product.cost_price, Decimal("0"))
+
+    def test_admin_accepts_blank_cost_price(self):
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        admin_user = User.objects.create_superuser(
+            username="cost_admin", password="test_pass_12345"
+        )
+        self.client.force_login(admin_user)
+
+        response = self.client.post("/admin/products/product/add/", {
+            "name": "Bo'sh tannarx", "description": "",
+            "category": str(self.category.pk), "brand": "",
+            "price": "200000", "old_price": "", "cost_price": "",
+            "product_type": "skincare", "skin_type": "all",
+            "volume": "", "shade": "", "ingredients": "",
+            "shelf_life_months": "", "country_of_origin": "",
+            "in_stock": "on", "is_active": "on",
+            "images-TOTAL_FORMS": "0", "images-INITIAL_FORMS": "0",
+            "images-MIN_NUM_FORMS": "0", "images-MAX_NUM_FORMS": "1000",
+            "_save": "Save",
+        })
+        self.assertEqual(response.status_code, 302, "Bo'sh tannarx bilan saqlanishi kerak")
+        self.assertEqual(Product.objects.get(name="Bo'sh tannarx").cost_price, Decimal("0"))
+
+    def test_unit_profit_without_cost_price(self):
+        product = Product.objects.create(
+            name="Tannarxsiz 2", price=Decimal("90000"), category=self.category,
+        )
+        self.assertEqual(product.unit_profit, Decimal("90000"))
+
+
 class ProductImportTest(TestCase):
     """CSV/XLSX import — brend va kategoriya nom bo'yicha bog'lanadi."""
 

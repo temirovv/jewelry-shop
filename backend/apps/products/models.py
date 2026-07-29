@@ -107,8 +107,9 @@ class Product(models.Model):
         max_digits=12,
         decimal_places=0,
         default=0,
+        blank=True,
         verbose_name="Tannarx",
-        help_text="Yetkazib beruvchidan olingan narx (foyda hisoblash uchun, mijozga ko'rinmaydi)",
+        help_text="Yetkazib beruvchidan olingan narx (foyda hisoblash uchun, mijozga ko'rinmaydi). Bo'sh qoldirilsa 0 hisoblanadi.",
     )
 
     category = models.ForeignKey(
@@ -141,6 +142,13 @@ class Product(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # Tannarx ixtiyoriy (blank=True), lekin ustun NOT NULL. Bo'sh forma,
+        # CSV importdagi bo'sh katak yoki API None yuborsa — 0 deb yozamiz.
+        if self.cost_price is None:
+            self.cost_price = 0
+        super().save(*args, **kwargs)
 
     @property
     def discount_percent(self):
