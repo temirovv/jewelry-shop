@@ -128,7 +128,7 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/product/:id"
+          path="/product/:slug"
           element={
             <PageWrapper direction={direction}>
               <Suspense fallback={<LazyFallback />}>
@@ -168,7 +168,7 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/order/:id"
+          path="/order/:number"
           element={
             <PageWrapper direction={direction}>
               <Suspense fallback={<LazyFallback />}>
