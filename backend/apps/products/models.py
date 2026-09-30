@@ -1,5 +1,35 @@
+from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils.text import slugify
+
+PRODUCT_SLUG_MAX_LENGTH = 280
+
+
+def validate_not_numeric(value):
+    """Faqat raqamdan iborat slug eski /product/<id>/ havolalari bilan
+    to'qnashadi — API raqamni id deb qabul qiladi."""
+    if value and value.isdigit():
+        raise ValidationError("Slug faqat raqamlardan iborat bo'lmasligi kerak")
+
+
+def build_product_slug(model, name, exclude_pk=None):
+    """Nomdan takrorlanmas slug yasash: "nom", "nom-2", "nom-3", ...
+
+    `model` sifatida migratsiyadagi tarixiy model ham berilishi mumkin."""
+    base = slugify(name, allow_unicode=True)[: PRODUCT_SLUG_MAX_LENGTH - 10] or "mahsulot"
+    if base.isdigit():
+        base = f"mahsulot-{base}"
+
+    taken = model._default_manager.filter(slug__startswith=base)
+    if exclude_pk is not None:
+        taken = taken.exclude(pk=exclude_pk)
+    taken = set(taken.values_list("slug", flat=True))
+
+    slug, n = base, 2
+    while slug in taken:
+        slug = f"{base}-{n}"
+        n += 1
+    return slug
 
 
 class Banner(models.Model):
@@ -100,6 +130,14 @@ class Product(models.Model):
     ]
 
     name = models.CharField(max_length=255)
+    slug = models.SlugField(
+        max_length=PRODUCT_SLUG_MAX_LENGTH,
+        unique=True,
+        blank=True,
+        allow_unicode=True,
+        validators=[validate_not_numeric],
+        help_text="URL uchun. Bo'sh qoldirilsa nomdan yasaladi; keyin o'zgartirilsa eski havolalar ishlamay qoladi.",
+    )
     description = models.TextField(blank=True)
     price = models.DecimalField(max_digits=12, decimal_places=0)
     old_price = models.DecimalField(max_digits=12, decimal_places=0, blank=True, null=True)
@@ -148,6 +186,10 @@ class Product(models.Model):
         # CSV importdagi bo'sh katak yoki API None yuborsa — 0 deb yozamiz.
         if self.cost_price is None:
             self.cost_price = 0
+        # Slug faqat bo'sh bo'lsa yasaladi: nom o'zgarganda ulashilgan
+        # havolalar buzilmasin
+        if not self.slug:
+            self.slug = build_product_slug(Product, self.name, exclude_pk=self.pk)
         super().save(*args, **kwargs)
 
     @property

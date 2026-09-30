@@ -71,10 +71,22 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     ordering_fields = ["price", "created_at"]
     ordering = ["-created_at"]
 
+    lookup_field = "slug"
+
     def get_serializer_class(self):
         if self.action == "retrieve":
             return ProductDetailSerializer
         return ProductListSerializer
+
+    def get_object(self):
+        # Eski /product/<id>/ havolalari (bannerlar, ulashilgan linklar)
+        # ishlashda davom etsin. Slug hech qachon faqat raqam bo'lmaydi,
+        # shuning uchun raqamli qiymat har doim id.
+        value = self.kwargs[self.lookup_field]
+        if value.isdigit():
+            self.lookup_field = "pk"
+            self.kwargs = {"pk": value}
+        return super().get_object()
 
     @action(detail=False, methods=["get"])
     def featured(self, request):
