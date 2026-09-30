@@ -1,7 +1,22 @@
+import secrets
+
 from django.core.validators import MaxValueValidator
 from django.db import models
 from apps.users.models import TelegramUser
 from apps.products.models import Product
+
+
+# 0/O va 1/I kabi adashtiriladigan belgilarsiz — mijoz raqamni telefonda
+# aytib berganda xato bo'lmasin
+ORDER_NUMBER_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+ORDER_NUMBER_PREFIX = "ZY-"
+ORDER_NUMBER_LENGTH = 6
+
+
+def generate_order_number():
+    return ORDER_NUMBER_PREFIX + "".join(
+        secrets.choice(ORDER_NUMBER_ALPHABET) for _ in range(ORDER_NUMBER_LENGTH)
+    )
 
 
 class Order(models.Model):
@@ -21,6 +36,11 @@ class Order(models.Model):
         ("transfer", "Karta o'tkazma"),
     ]
 
+    # Tashqariga ko'rinadigan raqam. Ketma-ket id mijozga ko'rsatilsa,
+    # istalgan kishi bitta buyurtma berib, do'kon savdo hajmini bilib oladi.
+    number = models.CharField(
+        max_length=16, unique=True, editable=False, verbose_name="Buyurtma raqami"
+    )
     user = models.ForeignKey(
         TelegramUser, on_delete=models.PROTECT, related_name="orders"
     )
@@ -60,7 +80,15 @@ class Order(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"#{self.id} - {self.user.full_name}"
+        return f"{self.number} - {self.user.full_name}"
+
+    def save(self, *args, **kwargs):
+        if not self.number:
+            number = generate_order_number()
+            while Order.objects.filter(number=number).exists():
+                number = generate_order_number()
+            self.number = number
+        super().save(*args, **kwargs)
 
     def calculate_total(self):
         items_total = sum(item.subtotal for item in self.items.all())

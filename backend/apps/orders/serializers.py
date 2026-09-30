@@ -22,8 +22,9 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
+        # Ichki ketma-ket "id" ataylab chiqarilmaydi — u savdo hajmini ochib beradi
         fields = [
-            "id",
+            "number",
             "status",
             "status_display",
             "total",
@@ -40,7 +41,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = [
-            "id", "status", "total", "delivery_fee", "is_paid", "created_at",
+            "number", "status", "total", "delivery_fee", "is_paid", "created_at",
         ]
 
     def get_delivery_zone_name(self, obj):

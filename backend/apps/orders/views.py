@@ -21,6 +21,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     serializer_class = OrderSerializer
     http_method_names = ["get", "post"]
+    lookup_field = "number"
     throttle_scope = "orders"
 
     def get_throttles(self):

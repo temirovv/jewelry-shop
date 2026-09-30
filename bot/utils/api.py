@@ -70,7 +70,7 @@ def format_order_message(order: dict) -> str:
         items_text += f"  ... va yana {len(items) - 5} ta\n"
 
     msg = (
-        f"\U0001f6cd <b>Buyurtma #{order.get('id', 0):05d}</b>\n"
+        f"\U0001f6cd <b>Buyurtma {escape(order.get('number', ''))}</b>\n"
         f"\U0001f4cb Holat: {status}\n"
         f"\U0001f4b3 To'lov: {payment}\n"
     )
@@ -89,12 +89,12 @@ async def send_status_notification(
 ) -> bool:
     """Buyurtma holati o'zgarganda foydalanuvchiga xabar yuborish."""
     status_label = STATUS_LABELS.get(new_status, new_status)
-    order_id = order.get("id", 0)
+    order_number = escape(order.get("number", ""))
     total = f"{int(float(order.get('total', 0))):,}".replace(",", " ")
 
     text = (
         f"\U0001f514 <b>Buyurtma yangilandi!</b>\n\n"
-        f"\U0001f6cd Buyurtma: <b>#{order_id:05d}</b>\n"
+        f"\U0001f6cd Buyurtma: <b>{order_number}</b>\n"
         f"\U0001f4cb Yangi holat: <b>{status_label}</b>\n"
         f"\U0001f4b0 Summa: <b>{total} so'm</b>\n"
     )
