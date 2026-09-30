@@ -55,6 +55,11 @@ class TelegramAuthentication(BaseAuthentication):
             },
         )
 
+        # Admin bloklagan foydalanuvchi (is_active=False) anonim hisoblanadi:
+        # katalogni ko'ra oladi, lekin savat/buyurtma/sevimlilar yopiq
+        if not user.is_active:
+            return None
+
         return (user, None)
 
     def _authenticate_bot(self, request):
@@ -65,12 +70,16 @@ class TelegramAuthentication(BaseAuthentication):
         if not bot_token or not telegram_user_id:
             return None
 
-        # Bot token ni tekshirish
-        if bot_token != settings.BOT_TOKEN:
+        # Bot token ni tekshirish (timing attack'dan himoya uchun compare_digest)
+        if not settings.BOT_TOKEN or not hmac.compare_digest(
+            bot_token.encode(), settings.BOT_TOKEN.encode()
+        ):
             return None
 
         try:
-            user = TelegramUser.objects.get(telegram_id=int(telegram_user_id))
+            user = TelegramUser.objects.get(
+                telegram_id=int(telegram_user_id), is_active=True
+            )
             return (user, None)
         except (TelegramUser.DoesNotExist, ValueError):
             return None
@@ -86,15 +95,14 @@ class TelegramAuthentication(BaseAuthentication):
             if not hash_value:
                 return False
 
-            # auth_date expiry tekshiruvi
-            auth_date_str = parsed.get("auth_date")
-            if auth_date_str:
-                try:
-                    auth_date = int(auth_date_str)
-                    if time.time() - auth_date > AUTH_DATE_MAX_AGE:
-                        return False
-                except (ValueError, TypeError):
-                    return False
+            # auth_date majburiy: busiz bir marta tutib olingan initData
+            # muddatsiz ishlayverardi
+            try:
+                auth_date = int(parsed["auth_date"])
+            except (KeyError, ValueError, TypeError):
+                return False
+            if time.time() - auth_date > AUTH_DATE_MAX_AGE:
+                return False
 
             data_check_string = "\n".join(
                 f"{k}={v}" for k, v in sorted(parsed.items())
@@ -112,7 +120,7 @@ class TelegramAuthentication(BaseAuthentication):
                 hashlib.sha256,
             ).hexdigest()
 
-            return calculated_hash == hash_value
+            return hmac.compare_digest(calculated_hash, hash_value)
         except Exception:
             return False
 
