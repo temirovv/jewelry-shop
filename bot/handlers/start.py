@@ -1,3 +1,5 @@
+from html import escape
+
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import CommandStart, Command
@@ -12,7 +14,7 @@ router = Router()
 async def cmd_start(message: Message):
     """Start buyrug'i"""
     await message.answer(
-        f"✨ <b>Assalomu alaykum, {message.from_user.first_name}!</b>\n\n"
+        f"✨ <b>Assalomu alaykum, {escape(message.from_user.first_name)}!</b>\n\n"
         "💄 <b>ZIYORA</b> — kosmetika marketplace'iga xush kelibsiz!\n\n"
         "Bizda:\n"
         "💄 Original kosmetika mahsulotlari\n"

@@ -56,7 +56,8 @@ def add_to_cart(request):
     )
 
     if not created:
-        cart_item.quantity += data["quantity"]
+        # Buyurtma 99 tadan ortig'ini qabul qilmaydi — savat ham shu chegarada
+        cart_item.quantity = min(cart_item.quantity + data["quantity"], 99)
         cart_item.save()
 
     return Response(CartSerializer(cart).data, status=status.HTTP_201_CREATED)

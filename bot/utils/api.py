@@ -1,4 +1,6 @@
 import logging
+from html import escape
+
 import aiohttp
 from config import API_BASE_URL, BOT_TOKEN
 
@@ -59,7 +61,7 @@ def format_order_message(order: dict) -> str:
     items_text = ""
     for item in items[:5]:
         product = item.get("product", {})
-        name = product.get("name", "Noma'lum")
+        name = escape(product.get("name", "Noma'lum"))
         qty = item.get("quantity", 1)
         price = f"{int(float(item.get('price', 0))):,}".replace(",", " ")
         items_text += f"  \u2022 {name} x{qty} \u2014 {price} so'm\n"

@@ -49,6 +49,9 @@ class OrderSerializer(serializers.ModelSerializer):
         return None
 
 
+MAX_ORDER_ITEMS = 50
+
+
 class CreateOrderSerializer(serializers.Serializer):
     """Buyurtma yaratish uchun"""
 
@@ -89,11 +92,23 @@ class CreateOrderSerializer(serializers.Serializer):
     def validate_items(self, value):
         from apps.products.models import Product
 
+        if len(value) > MAX_ORDER_ITEMS:
+            raise serializers.ValidationError(
+                f"Bitta buyurtmada {MAX_ORDER_ITEMS} tadan ortiq mahsulot bo'lmaydi"
+            )
+
+        # Qiymatlar tur bo'yicha tozalanib qaytariladi: view'ga "abc" kabi
+        # product_id yoki 50 belgidan uzun size yetib borsa, DB 500 qaytarardi
+        cleaned = []
         for item in value:
             if "product_id" not in item or "quantity" not in item:
                 raise serializers.ValidationError(
                     "Har bir element 'product_id' va 'quantity' bo'lishi kerak"
                 )
+            try:
+                product_id = int(item["product_id"])
+            except (TypeError, ValueError):
+                raise serializers.ValidationError("product_id butun son bo'lishi kerak")
             try:
                 qty = int(item["quantity"])
             except (TypeError, ValueError):
@@ -102,8 +117,14 @@ class CreateOrderSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     "Miqdor 1 dan 99 gacha bo'lishi kerak"
                 )
-            if not Product.objects.filter(id=item["product_id"], is_active=True).exists():
+            size = item.get("size") or ""
+            if not isinstance(size, str) or len(size) > 50:
                 raise serializers.ValidationError(
-                    f"Mahsulot #{item['product_id']} topilmadi"
+                    "O'lcham 50 belgidan oshmasligi kerak"
                 )
-        return value
+            if not Product.objects.filter(id=product_id, is_active=True).exists():
+                raise serializers.ValidationError(
+                    f"Mahsulot #{product_id} topilmadi"
+                )
+            cleaned.append({"product_id": product_id, "quantity": qty, "size": size})
+        return cleaned

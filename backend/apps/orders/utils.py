@@ -1,4 +1,6 @@
 import logging
+from html import escape
+
 import httpx
 from django.conf import settings
 
@@ -22,20 +24,23 @@ def send_order_notification(order: Order):
         logger.warning("BOT_TOKEN yoki ADMIN_IDS sozlanmagan")
         return
 
-    # Buyurtma ma'lumotlarini tayyorlash (prefetch bilan N+1 oldini olish)
+    # Xabar parse_mode=HTML bilan ketadi. Mijoz yozgan matn (izoh, manzil,
+    # ism) escape qilinmasa, "<3" kabi belgi Telegram'da 400 xato beradi va
+    # admin buyurtma haqida bilmay qoladi; <a href> esa fishing havolaga aylanadi.
     items = order.items.select_related("product").all()
     items_text = "\n".join(
-        f"  • {item.product.name} x{item.quantity} — {item.price:,.0f} so'm"
+        f"  • {escape(item.product.name)} x{item.quantity} — {item.price:,.0f} so'm"
         for item in items
     )
 
     payment_method = order.get_payment_method_display()
+    customer_name = escape(order.user.first_name) if order.user.first_name else "Noma'lum"
 
     message = f"""
 🛍 <b>Yangi buyurtma #{order.id:05d}</b>
 
-👤 <b>Mijoz:</b> {order.user.first_name or 'Noma\'lum'}
-📱 <b>Telefon:</b> {order.phone}
+👤 <b>Mijoz:</b> {customer_name}
+📱 <b>Telefon:</b> {escape(order.phone)}
 💳 <b>To'lov:</b> {payment_method}
 
 📦 <b>Mahsulotlar:</b>
@@ -45,10 +50,10 @@ def send_order_notification(order: Order):
 """
 
     if order.delivery_address:
-        message += f"\n📍 <b>Manzil:</b> {order.delivery_address}"
+        message += f"\n📍 <b>Manzil:</b> {escape(order.delivery_address)}"
 
     if order.comment:
-        message += f"\n💬 <b>Izoh:</b> {order.comment}"
+        message += f"\n💬 <b>Izoh:</b> {escape(order.comment)}"
 
     # Har bir admin userga xabar yuborish
     for admin_id in admin_ids:
