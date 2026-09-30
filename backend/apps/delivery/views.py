@@ -28,5 +28,7 @@ class DeliveryZoneViewSet(viewsets.ReadOnlyModelViewSet):
         qs = DeliveryZone.objects.filter(is_active=True).select_related("region")
         region_id = self.request.query_params.get("region")
         if region_id:
+            if not region_id.isdigit():
+                return qs.none()
             qs = qs.filter(region_id=region_id)
         return qs.order_by("region__ordering", "ordering", "name")

@@ -65,10 +65,11 @@ class FavoriteViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        product_id = request.data.get("product_id")
-        if not product_id:
+        try:
+            product_id = int(request.data.get("product_id"))
+        except (TypeError, ValueError):
             return Response(
-                {"error": "product_id majburiy"},
+                {"error": "product_id butun son bo'lishi kerak"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -81,11 +82,11 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         fav = Favorite.objects.filter(user=request.user, product_id=product_id).first()
         if fav:
             fav.delete()
-            return Response({"is_favorite": False, "product_id": int(product_id)})
+            return Response({"is_favorite": False, "product_id": product_id})
 
         Favorite.objects.create(user=request.user, product_id=product_id)
         return Response(
-            {"is_favorite": True, "product_id": int(product_id)},
+            {"is_favorite": True, "product_id": product_id},
             status=status.HTTP_201_CREATED,
         )
 
