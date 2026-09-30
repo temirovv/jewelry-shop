@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -6,7 +7,9 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-DEBUG = os.getenv("DEBUG", "True").lower() == "true"
+# Standart qiymat False: env yo'qolsa ham prod "fail-open" bo'lib, DEBUG
+# mock user (autentifikatsiyasiz kirish) yoqilib qolmasin.
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 if not SECRET_KEY:
@@ -125,6 +128,18 @@ MEDIA_ROOT = BASE_DIR / "media"
 # sifatida bloklanadi.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = int(os.getenv("SECURE_HSTS_SECONDS", "31536000"))
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+
+# Throttle hisoblagichlari keshda turadi. Testlarda ular testdan testga
+# o'tib, bir-biriga bog'liq bo'lmagan testlarni 429 bilan yiqitmasin —
+# throttle testlari LocMem keshni o'zlari yoqadi.
+if len(sys.argv) > 1 and sys.argv[1] == "test":
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
+
 # Default primary key
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -150,7 +165,14 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "100/hour",
         "user": "1000/hour",
+        # Har bir buyurtma barcha adminlarga Telegram xabar yuboradi —
+        # spam bilan admin chatini to'ldirib yuborishning oldini olish
+        "orders": os.getenv("ORDERS_THROTTLE_RATE", "10/hour"),
     },
+    # So'rov ikki proxy'dan o'tadi: host nginx -> docker nginx -> gunicorn.
+    # Busiz DRF X-Forwarded-For'ni butunlay IP deb oladi va mijoz soxta
+    # header yuborib throttle'ni aylanib o'ta oladi.
+    "NUM_PROXIES": int(os.getenv("NUM_PROXIES", "2")),
 }
 
 # CORS

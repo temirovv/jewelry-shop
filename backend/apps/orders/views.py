@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.db import transaction
 from rest_framework import viewsets, status
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 
 from .models import Order, OrderItem
 from .serializers import OrderSerializer, CreateOrderSerializer
@@ -20,6 +21,14 @@ class OrderViewSet(viewsets.ModelViewSet):
 
     serializer_class = OrderSerializer
     http_method_names = ["get", "post"]
+    throttle_scope = "orders"
+
+    def get_throttles(self):
+        # "orders" limiti faqat yangi buyurtmaga: ro'yxat va tafsilotlarni
+        # ko'rish umumiy user limiti bilan qoladi
+        if self.action == "create":
+            return [*super().get_throttles(), ScopedRateThrottle()]
+        return super().get_throttles()
 
     def get_queryset(self):
         if hasattr(self.request.user, "telegram_id"):
