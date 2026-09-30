@@ -12,6 +12,7 @@ import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../stores/toastStore";
 import { useState } from "react";
 import type { Product } from "../types";
+import { productPath } from "../lib/utils";
 
 export function FavoritesPage() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export function FavoritesPage() {
   const handleProductPress = useCallback(
     (product: Product) => {
       hapticFeedback?.impactOccurred?.("light");
-      navigate(`/product/${product.id}`);
+      navigate(productPath(product));
     },
     [hapticFeedback, navigate]
   );

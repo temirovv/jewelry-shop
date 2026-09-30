@@ -29,12 +29,12 @@ import { useFavoritesStore } from "../stores/favoritesStore";
 import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../stores/toastStore";
 import { getProduct, getProducts } from "../lib/api/products";
-import { formatPrice } from "../lib/utils";
+import { formatPrice, productPath } from "../lib/utils";
 import { staggerContainerVariants, staggerItemVariants } from "../lib/animations";
 import type { Product } from "../types";
 
 export function ProductDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,11 +55,11 @@ export function ProductDetailPage() {
 
   useEffect(() => {
     const fetchProduct = async () => {
-      if (!id) return;
+      if (!slug) return;
       setIsLoading(true);
       setError(null);
       try {
-        const data = await getProduct(Number(id));
+        const data = await getProduct(slug);
         setProduct(data);
       } catch {
         setError("Mahsulot topilmadi");
@@ -68,7 +68,7 @@ export function ProductDetailPage() {
       }
     };
     fetchProduct();
-  }, [id]);
+  }, [slug]);
 
   // Fetch related products
   useEffect(() => {
@@ -310,7 +310,7 @@ export function ProductDetailPage() {
           <ProductScroller
             products={relatedProducts}
             onProductPress={(p) => {
-              navigate(`/product/${p.id}`);
+              navigate(productPath(p));
               window.scrollTo(0, 0);
             }}
             onAddToCart={(p) => {

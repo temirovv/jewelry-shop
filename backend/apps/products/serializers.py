@@ -61,6 +61,7 @@ class ProductListSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             "id",
+            "slug",
             "name",
             "price",
             "old_price",
@@ -87,6 +88,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             "id",
+            "slug",
             "name",
             "description",
             "price",

@@ -10,6 +10,7 @@ export interface Banner {
 
 export interface Product {
   id: number;
+  slug: string;
   name: string;
   description: string;
   price: number;
@@ -95,7 +96,7 @@ export interface User {
 export type PaymentMethod = "cash" | "transfer";
 
 export interface Order {
-  id: number;
+  number: string;
   user: User;
   items: OrderItem[];
   total: number;

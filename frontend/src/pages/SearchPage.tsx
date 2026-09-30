@@ -20,6 +20,7 @@ import { toast } from "../stores/toastStore";
 import { getProducts, getProductsByUrl, getCategories, type ProductFilters } from "../lib/api/products";
 import { getBrands } from "../lib/api/brands";
 import type { Product, Category, Brand } from "../types";
+import { productPath } from "../lib/utils";
 
 const SORT_OPTIONS = [
   { value: "", label: "Standart" },
@@ -147,7 +148,7 @@ export function SearchPage() {
   const handleProductPress = useCallback(
     (product: Product) => {
       hapticFeedback?.impactOccurred?.("light");
-      navigate(`/product/${product.id}`);
+      navigate(productPath(product));
     },
     [hapticFeedback, navigate]
   );

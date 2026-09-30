@@ -70,8 +70,8 @@ class OrderAdmin(ExportMixin, ModelAdmin):
     ]
     list_display_links = ["display_id", "display_user"]
     list_filter = ["status", "payment_method", "is_paid", "created_at"]
-    search_fields = ["user__first_name", "user__phone", "phone", "id"]
-    readonly_fields = ["total", "delivery_fee", "created_at", "updated_at"]
+    search_fields = ["number", "user__first_name", "user__phone", "phone", "id"]
+    readonly_fields = ["number", "total", "delivery_fee", "created_at", "updated_at"]
     inlines = [OrderItemInline]
     ordering = ["-created_at"]
     list_filter_submit = True
@@ -82,7 +82,7 @@ class OrderAdmin(ExportMixin, ModelAdmin):
 
     fieldsets = (
         ("Buyurtma", {
-            "fields": ("user", "status"),
+            "fields": ("number", "user", "status"),
             "classes": ["tab"],
         }),
         ("Aloqa", {
@@ -99,11 +99,11 @@ class OrderAdmin(ExportMixin, ModelAdmin):
         }),
     )
 
-    @display(description="ID")
+    @display(description="Raqam", ordering="id")
     def display_id(self, obj):
         return format_html(
-            '<span class="font-mono font-semibold text-primary-600">#{}</span>',
-            str(obj.id).zfill(5)
+            '<span class="font-mono font-semibold text-primary-600">{}</span>',
+            obj.number
         )
 
     @display(description="Mijoz")
@@ -180,7 +180,7 @@ class OrderAdmin(ExportMixin, ModelAdmin):
             try:
                 send_status_notification(order, new_status)
             except Exception as e:
-                logger.error(f"Failed to send notification for order #{order.id}: {e}")
+                logger.error(f"Failed to send notification for order {order.number}: {e}")
         self.message_user(request, message)
 
     @action(description="Tasdiqlash", icon="check_circle")

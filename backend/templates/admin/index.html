@@ -298,7 +298,7 @@
         <div class="jw-row">
             <div>
                 <div class="jw-name">
-                    #{{ order.id|stringformat:"05d" }}
+                    {{ order.number }}
                     <span class="jw-sub">— {{ order.user.first_name|default:"Noma'lum" }}</span>
                 </div>
                 <div class="jw-date">{{ order.created_at|date:"d M Y, H:i" }}</div>

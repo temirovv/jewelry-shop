@@ -42,8 +42,10 @@ export async function getOrdersByUrl(url: string): Promise<OrdersResponse> {
   return { orders: data.results || [], next: data.next || null };
 }
 
-export async function getOrder(id: number): Promise<Order> {
-  const response = await apiClient.get<Order>(`/orders/${id}/`);
+export async function getOrder(number: string): Promise<Order> {
+  const response = await apiClient.get<Order>(
+    `/orders/${encodeURIComponent(number)}/`
+  );
   return response.data;
 }
 
