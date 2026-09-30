@@ -19,6 +19,7 @@ import { usePullToRefresh } from "../hooks/usePullToRefresh";
 import { toast } from "../stores/toastStore";
 import { getProducts, getProductsByUrl, getCategories, getNewArrivals, getFeaturedProducts } from "../lib/api/products";
 import type { Product, Category } from "../types";
+import { productPath } from "../lib/utils";
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -148,7 +149,7 @@ export function HomePage() {
 
   const handleProductPress = useCallback((product: Product) => {
     hapticFeedback?.impactOccurred?.("light");
-    navigate(`/product/${product.id}`);
+    navigate(productPath(product));
   }, [hapticFeedback, navigate]);
 
   const handleTabChange = useCallback((tab: "home" | "search" | "favorites" | "cart" | "profile") => {
@@ -381,7 +382,7 @@ export function HomePage() {
         onAddToCart={handleAddToCart}
         onViewDetail={(product) => {
           setQuickViewOpen(false);
-          navigate(`/product/${product.id}`);
+          navigate(productPath(product));
         }}
       />
 

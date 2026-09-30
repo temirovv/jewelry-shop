@@ -252,16 +252,16 @@ export function ProfilePage() {
                   const StatusIcon = status.icon;
                   return (
                     <motion.div
-                      key={order.id}
+                      key={order.number}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className="bg-muted/50 rounded-xl p-4 cursor-pointer active:scale-[0.98] transition-transform"
-                      onClick={() => navigate(`/order/${order.id}`)}
+                      onClick={() => navigate(`/order/${encodeURIComponent(order.number)}`)}
                     >
                       <div className="flex items-start justify-between mb-3">
                         <div>
                           <p className="font-semibold">
-                            Buyurtma #{order.id}
+                            Buyurtma {order.number}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {formatDate(order.created_at)}

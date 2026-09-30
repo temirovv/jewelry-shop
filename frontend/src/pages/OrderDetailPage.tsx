@@ -35,7 +35,7 @@ const STATUS_CONFIG: Record<
 };
 
 export function OrderDetailPage() {
-  const { id } = useParams<{ id: string }>();
+  const { number } = useParams<{ number: string }>();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,11 +50,11 @@ export function OrderDetailPage() {
 
   useEffect(() => {
     const fetchOrder = async () => {
-      if (!id) return;
+      if (!number) return;
       setIsLoading(true);
       setError(null);
       try {
-        const data = await getOrder(Number(id));
+        const data = await getOrder(number);
         setOrder(data);
       } catch {
         setError("Buyurtma topilmadi");
@@ -63,7 +63,7 @@ export function OrderDetailPage() {
       }
     };
     fetchOrder();
-  }, [id]);
+  }, [number]);
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("uz-UZ", {
@@ -124,7 +124,7 @@ export function OrderDetailPage() {
         </button>
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-xl font-bold">Buyurtma #{order.id}</h1>
+            <h1 className="text-xl font-bold">Buyurtma {order.number}</h1>
             <p className="text-sm text-muted-foreground mt-1">
               {formatDate(order.created_at)}
             </p>

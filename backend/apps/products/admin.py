@@ -256,8 +256,9 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
     ]
     list_display_links = ["display_image", "name"]
     list_filter = ["category", "brand", "product_type", "skin_type", "in_stock", "is_featured", "created_at"]
-    search_fields = ["name", "description", "brand__name"]
+    search_fields = ["name", "slug", "description", "brand__name"]
     list_editable = ["in_stock", "is_featured"]
+    prepopulated_fields = {"slug": ("name",)}
     list_filter_submit = True
     inlines = [ProductImageInline]
     readonly_fields = ["created_at", "updated_at", "unit_profit_display"]
@@ -268,7 +269,7 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
 
     fieldsets = (
         ("Asosiy", {
-            "fields": ("name", "description", "category", "brand"),
+            "fields": ("name", "slug", "description", "category", "brand"),
             "classes": ["tab"],
         }),
         ("Narx", {
@@ -379,6 +380,7 @@ class ProductAdmin(ImportExportModelAdmin, ModelAdmin):
             images = list(product.images.all())
             product.pk = None
             product.name = f"{product.name} (nusxa)"
+            product.slug = ""  # save() yangi, takrorlanmas slug yasaydi
             product.save()
             for img in images:
                 img.pk = None

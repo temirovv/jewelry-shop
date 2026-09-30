@@ -39,7 +39,7 @@ export function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [orderId, setOrderId] = useState<number | null>(null);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
 
   const [regions, setRegions] = useState<DeliveryRegion[]>([]);
   const [regionId, setRegionId] = useState<number | null>(null);
@@ -140,7 +140,7 @@ export function CheckoutPage() {
         payment_method: paymentMethod,
       });
 
-      setOrderId(order.id);
+      setOrderNumber(order.number);
       setIsSuccess(true);
       clearCart();
       hapticFeedback?.notificationOccurred?.("success");
@@ -226,7 +226,7 @@ export function CheckoutPage() {
           transition={{ delay: 0.3 }}
           className="text-muted-foreground mb-2"
         >
-          Buyurtma raqami: #{orderId}
+          Buyurtma raqami: {orderNumber}
         </motion.p>
 
         <motion.p

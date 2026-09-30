@@ -38,8 +38,10 @@ export async function getProductsByUrl(
   return response.data;
 }
 
-export async function getProduct(id: number): Promise<Product> {
-  const response = await apiClient.get<Product>(`/products/${id}/`);
+export async function getProduct(slugOrId: string): Promise<Product> {
+  const response = await apiClient.get<Product>(
+    `/products/${encodeURIComponent(slugOrId)}/`
+  );
   return response.data;
 }
 

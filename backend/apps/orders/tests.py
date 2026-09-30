@@ -24,7 +24,7 @@ class OrderModelTest(TestCase):
 
     def test_create_order(self):
         order = Order.objects.create(user=self.user, phone="+998901234567")
-        self.assertEqual(str(order), f"#{order.id} - Test")
+        self.assertEqual(str(order), f"{order.number} - Test")
         self.assertEqual(order.status, "pending")
 
     def test_order_item_subtotal(self):
@@ -140,7 +140,7 @@ class OrderAPITest(TestCase):
             format="json",
         )
         self.assertEqual(response.status_code, 201)
-        item = OrderItem.objects.get(order_id=response.data["id"])
+        item = OrderItem.objects.get(order__number=response.data["number"])
         self.assertEqual(item.cost_price, Decimal("1000000"))
         self.assertEqual(item.profit, Decimal("1000000"))  # (1.5M − 1M) × 2
 
@@ -264,5 +264,5 @@ class OrderAPITest(TestCase):
             telegram_id=777, first_name="Other"
         )
         other_order = Order.objects.create(user=other_user, phone="+998900000000")
-        response = self.client.get(f"/api/orders/{other_order.id}/")
+        response = self.client.get(f"/api/orders/{other_order.number}/")
         self.assertEqual(response.status_code, 404)

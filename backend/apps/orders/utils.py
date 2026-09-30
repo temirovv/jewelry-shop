@@ -37,7 +37,7 @@ def send_order_notification(order: Order):
     customer_name = escape(order.user.first_name) if order.user.first_name else "Noma'lum"
 
     message = f"""
-🛍 <b>Yangi buyurtma #{order.id:05d}</b>
+🛍 <b>Yangi buyurtma {order.number}</b>
 
 👤 <b>Mijoz:</b> {customer_name}
 📱 <b>Telefon:</b> {escape(order.phone)}
@@ -89,7 +89,7 @@ def send_status_notification(order: Order, new_status: str):
 
     message = (
         f"🔔 <b>Buyurtma yangilandi!</b>\n\n"
-        f"🛍 Buyurtma: <b>#{order.id:05d}</b>\n"
+        f"🛍 Buyurtma: <b>{order.number}</b>\n"
         f"📋 Yangi holat: <b>{status_label}</b>\n"
         f"💰 Summa: <b>{total_formatted} so'm</b>\n"
     )
