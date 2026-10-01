@@ -66,6 +66,12 @@ jobs:
           cd backend
           python manage.py check
 
+      - name: Migrations up to date
+        # Model o'zgarib, migratsiya yaratilmay qolsa CI yiqilsin
+        run: |
+          cd backend
+          python manage.py makemigrations --check --dry-run
+
       - name: Run tests
         run: |
           cd backend
