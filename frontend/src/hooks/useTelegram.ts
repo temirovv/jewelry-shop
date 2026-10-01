@@ -26,7 +26,7 @@ interface HapticFeedback {
 
 interface TelegramWebApp {
   initData: string;
-  initDataUnsafe: { user?: TelegramUser };
+  initDataUnsafe: { user?: TelegramUser; start_param?: string };
   colorScheme: "light" | "dark";
   themeParams: ThemeParams;
   HapticFeedback: HapticFeedback;
@@ -125,7 +125,9 @@ export function useTelegram(): UseTelegramReturn {
     webApp,
     user,
     isReady: true,
-    isTelegram: !!webApp,
+    // telegram-web-app.js oddiy brauzerda ham window.Telegram.WebApp'ni
+    // yaratadi — haqiqatan Telegram ichidaligini faqat initData ko'rsatadi
+    isTelegram: !!webApp?.initData,
     colorScheme: webApp?.colorScheme || "light",
     themeParams: webApp?.themeParams || {},
     showMainButton,
