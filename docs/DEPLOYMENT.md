@@ -279,4 +279,9 @@ docker compose -f docker-compose.prod.yml exec -T db \
 
 # SSL tekshirish
 sudo certbot renew --dry-run
+
+# Admin login bloki (django-axes: bitta IP'dan 5 xato urinish → 1 soat blok)
+docker compose -f docker-compose.prod.yml exec backend python manage.py axes_list_attempts
+docker compose -f docker-compose.prod.yml exec backend python manage.py axes_reset_ip <ip>
+docker compose -f docker-compose.prod.yml exec backend python manage.py axes_reset   # hammasini ochish
 ```

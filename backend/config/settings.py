@@ -7,6 +7,8 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
+
 # Standart qiymat False: env yo'qolsa ham prod "fail-open" bo'lib, DEBUG
 # mock user (autentifikatsiyasiz kirish) yoqilib qolmasin.
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
@@ -44,6 +46,8 @@ INSTALLED_APPS = [
     "apps.orders",
     "apps.cart",
     "apps.delivery",
+    # Oxirida bo'lishi kerak (django-axes talabi)
+    "axes",
 ]
 
 MIDDLEWARE = [
@@ -56,7 +60,32 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "axes.middleware.AxesMiddleware",
 ]
+
+AUTHENTICATION_BACKENDS = [
+    "axes.backends.AxesStandaloneBackend",
+    "django.contrib.auth.backends.ModelBackend",
+]
+
+# Admin login'ga brute-force himoyasi: bitta IP'dan 5 ta xato urinishdan
+# keyin 1 soatga blok. Urinishlar DB'da — barcha gunicorn worker'lar uchun umumiy.
+# Blokni qo'lda ochish: python manage.py axes_reset_ip <ip>
+AXES_FAILURE_LIMIT = int(os.getenv("AXES_FAILURE_LIMIT", "5"))
+AXES_COOLOFF_TIME = 1  # soat
+AXES_LOCKOUT_PARAMETERS = ["ip_address"]
+AXES_RESET_ON_SUCCESS = True
+AXES_LOCKOUT_TEMPLATE = "admin/lockout.html"
+# Docker nginx'ga hamma so'rov host nginx'dan keladi, ya'ni REMOTE_ADDR doim
+# bir xil — u bo'yicha bloklash hammani birdan bloklab qo'yardi. Mijoz IP'si
+# X-Forwarded-For'dan olinadi. ipware'da proxy_count DRF'ning NUM_PROXIES'idan
+# farqli hisoblanadi: "mijoz, host-nginx" zanjiri uchun to'g'ri qiymat 1
+# (soxta XFF qo'shilsa ham haqiqiy IP olinadi — test_axes.py da tekshirilgan).
+AXES_IPWARE_META_PRECEDENCE_ORDER = ("HTTP_X_FORWARDED_FOR", "REMOTE_ADDR")
+AXES_IPWARE_PROXY_COUNT = int(os.getenv("AXES_IPWARE_PROXY_COUNT", "1"))
+# Test client.login() request bermaydi, axes esa uni talab qiladi.
+# Axes'ning o'z testlari uni override_settings bilan yoqadi.
+AXES_ENABLED = not TESTING
 
 ROOT_URLCONF = "config.urls"
 
@@ -137,7 +166,7 @@ if not DEBUG:
 # Throttle hisoblagichlari keshda turadi. Testlarda ular testdan testga
 # o'tib, bir-biriga bog'liq bo'lmagan testlarni 429 bilan yiqitmasin —
 # throttle testlari LocMem keshni o'zlari yoqadi.
-if len(sys.argv) > 1 and sys.argv[1] == "test":
+if TESTING:
     CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
 
 # Default primary key
