@@ -1,5 +1,5 @@
-import React, { Suspense, useEffect, useSyncExternalStore } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import React, { Suspense, useEffect, useRef, useSyncExternalStore } from "react";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { Sparkles, Loader2 } from "lucide-react";
 import { HomePage } from "./pages/HomePage";
@@ -9,6 +9,8 @@ import { useUserStore } from "./stores/userStore";
 import { useFavoritesStore } from "./stores/favoritesStore";
 import { ToastContainer } from "./components/Toast";
 import { OfflineBanner } from "./components/OfflineBanner";
+import { OpenInTelegram } from "./components/OpenInTelegram";
+import { parseStartParam } from "./lib/telegram-link";
 import { springs, pageSlideForward, pageSlideBack, pageVariants } from "./lib/animations";
 import "./index.css";
 
@@ -192,11 +194,29 @@ function AnimatedRoutes() {
   );
 }
 
+// Brauzerdan t.me/<bot>?startapp=... orqali kelganda Telegram ichida
+// o'sha sahifani ochish. Bosh sahifa tarixda qoladi — BackButton ishlaydi.
+function useStartParamRedirect(startParam: string | undefined) {
+  const navigate = useNavigate();
+  const handled = useRef(false);
+
+  useEffect(() => {
+    if (handled.current) return;
+    handled.current = true;
+    const path = parseStartParam(startParam);
+    if (path) navigate(path);
+  }, [startParam, navigate]);
+}
+
 function AppContent() {
-  const { colorScheme, themeParams, isReady } = useTelegram();
+  const { colorScheme, themeParams, isReady, isTelegram, webApp } = useTelegram();
   const syncWithBackend = useCartStore((state) => state.syncWithBackend);
   const fetchProfile = useUserStore((state) => state.fetchProfile);
   const syncFavorites = useFavoritesStore((state) => state.syncWithBackend);
+  // Production'da do'kon faqat Telegram ichida; dev'da brauzer (mock user) qoladi
+  const requireTelegram = import.meta.env.PROD && !isTelegram;
+
+  useStartParamRedirect(webApp?.initDataUnsafe?.start_param);
 
   useEffect(() => {
     if (colorScheme === "dark") {
@@ -208,12 +228,12 @@ function AppContent() {
 
   // Ilova yuklanganda savat, sevimlilar va profilni backend bilan sinxronlash
   useEffect(() => {
-    if (isReady) {
+    if (isReady && !requireTelegram) {
       syncWithBackend();
       syncFavorites();
       fetchProfile();
     }
-  }, [isReady, syncWithBackend, syncFavorites, fetchProfile]);
+  }, [isReady, requireTelegram, syncWithBackend, syncFavorites, fetchProfile]);
 
   useEffect(() => {
     if (themeParams) {
@@ -255,6 +275,10 @@ function AppContent() {
         </motion.div>
       </div>
     );
+  }
+
+  if (requireTelegram) {
+    return <OpenInTelegram />;
   }
 
   return (
