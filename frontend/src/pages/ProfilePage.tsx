@@ -27,7 +27,7 @@ import { useTelegram } from "../hooks/useTelegram";
 import { useUserStore } from "../stores/userStore";
 import { toast } from "../stores/toastStore";
 import { getOrders, getOrdersByUrl } from "../lib/api/orders";
-import { formatPrice } from "../lib/utils";
+import { formatPrice, imageSrc } from "../lib/utils";
 import type { Order, OrderStatus } from "../types";
 
 const STATUS_CONFIG: Record<
@@ -281,7 +281,7 @@ export function ProfilePage() {
                           <img
                             key={item.id}
                             src={
-                              item.product.images[0]?.image ||
+                              imageSrc(item.product.images[0]) ||
                               "/placeholder.svg"
                             }
                             alt={item.product.name}

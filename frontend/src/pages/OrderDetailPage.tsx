@@ -19,7 +19,7 @@ import { Badge } from "../components/ui/badge";
 import { Skeleton } from "../components/ui/skeleton";
 import { useTelegram } from "../hooks/useTelegram";
 import { getOrder } from "../lib/api/orders";
-import { formatPrice } from "../lib/utils";
+import { formatPrice, imageSrc } from "../lib/utils";
 import type { Order, OrderStatus } from "../types";
 
 const STATUS_CONFIG: Record<
@@ -147,7 +147,7 @@ export function OrderDetailPage() {
             {order.items.map((item) => (
               <div key={item.id} className="flex items-center gap-3">
                 <img
-                  src={item.product.images[0]?.image || "/placeholder.svg"}
+                  src={imageSrc(item.product.images[0]) || "/placeholder.svg"}
                   alt={item.product.name}
                   className="w-14 h-14 rounded-lg object-cover shrink-0"
                 />

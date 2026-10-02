@@ -9,7 +9,7 @@ import {
 } from "./ui/sheet";
 import { Button } from "./ui/button";
 import { useCartStore } from "../stores/cartStore";
-import { formatPrice } from "../lib/utils";
+import { formatPrice, imageSrc } from "../lib/utils";
 import { calculateDeliveryFee } from "../lib/constants";
 import type { CartItem } from "../types";
 
@@ -147,7 +147,7 @@ const CartItemCard = memo(function CartItemCard({
       <div className="w-20 h-20 rounded-xl overflow-hidden bg-muted flex-shrink-0">
         {mainImage?.image ? (
           <img
-            src={mainImage.image}
+            src={imageSrc(mainImage)}
             alt={item.product.name}
             className="w-full h-full object-cover"
           />

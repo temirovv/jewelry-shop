@@ -33,6 +33,10 @@ export interface Product {
 export interface ProductImage {
   id: number;
   image: string;
+  /** 400px WebP — kartochkalar uchun; yasab bo'lmasa null */
+  thumbnail?: string | null;
+  /** 1080px WebP — mahsulot galereyasi uchun */
+  large?: string | null;
   is_main: boolean;
 }
 
