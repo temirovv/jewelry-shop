@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useTelegram } from "../hooks/useTelegram";
+import { imageSrc } from "../lib/utils";
 import type { ProductImage } from "../types";
 
 interface ProductImageGalleryProps {
@@ -27,7 +28,7 @@ export function ProductImageGallery({
 
   const count = images.length;
   const safeIndex = Math.min(index, Math.max(0, count - 1));
-  const currentSrc = images[safeIndex]?.image || PLACEHOLDER;
+  const currentSrc = imageSrc(images[safeIndex], "large") || PLACEHOLDER;
 
   const next = useCallback(() => {
     if (count <= 1) return;
@@ -130,7 +131,7 @@ export function ProductImageGallery({
               aria-label={`Rasm ${i + 1}`}
             >
               <img
-                src={img.image || PLACEHOLDER}
+                src={imageSrc(img) || PLACEHOLDER}
                 alt={`${alt} ${i + 1}`}
                 className="w-full h-full object-cover"
                 draggable={false}
@@ -176,6 +177,7 @@ function FullscreenViewer({
   const pinchStart = useRef<number | null>(null);
   const pinchStartScale = useRef(1);
   const count = images.length;
+  // Zoom uchun asl rasm — batafsillik kerak
   const src = images[index]?.image || PLACEHOLDER;
 
   // Rasm almashganda zoom/pan holatini tiklash (render paytida — React tavsiyasi)

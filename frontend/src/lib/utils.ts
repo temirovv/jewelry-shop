@@ -1,9 +1,19 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import type { Product } from "../types";
+import type { Product, ProductImage } from "../types";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+// Eski javoblarda (localStorage'dagi savat/sevimlilar) thumbnail bo'lmasligi
+// mumkin — u holda asl rasm ishlatiladi
+export function imageSrc(
+  img: ProductImage | undefined,
+  size: "thumbnail" | "large" = "thumbnail"
+): string | undefined {
+  if (!img) return undefined;
+  return img[size] || img.image || undefined;
 }
 
 // localStorage'da saqlangan eski savat/sevimlilarda slug bo'lmasligi mumkin —

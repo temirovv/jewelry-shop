@@ -5,7 +5,7 @@ import { X, ShoppingBag, Heart, Minus, Plus, ChevronLeft, ChevronRight, Sparkles
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { useFavoritesStore } from "../stores/favoritesStore";
-import { formatPrice } from "../lib/utils";
+import { formatPrice, imageSrc } from "../lib/utils";
 import type { Product } from "../types";
 
 interface QuickViewModalProps {
@@ -85,7 +85,7 @@ export const QuickViewModal = memo(function QuickViewModal({
                   {images.length > 0 ? (
                     <motion.img
                       key={currentImageIndex}
-                      src={images[currentImageIndex]?.image}
+                      src={imageSrc(images[currentImageIndex], "large")}
                       alt={product.name}
                       className="w-full h-full object-cover"
                       initial={{ opacity: 0 }}

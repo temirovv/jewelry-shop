@@ -22,7 +22,7 @@ import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../stores/toastStore";
 import { createOrder, prepareOrderItems } from "../lib/api/orders";
 import { getRegions, calculateZoneFee } from "../lib/api/delivery";
-import { formatPrice } from "../lib/utils";
+import { formatPrice, imageSrc } from "../lib/utils";
 import { calculateDeliveryFee } from "../lib/constants";
 import type { PaymentMethod, DeliveryRegion, DeliveryZone } from "../types";
 
@@ -289,7 +289,7 @@ export function CheckoutPage() {
               >
                 <img
                   src={
-                    item.product.images[0]?.image || "/placeholder.svg"
+                    imageSrc(item.product.images[0]) || "/placeholder.svg"
                   }
                   alt={item.product.name}
                   className="w-14 h-14 rounded-lg object-cover"

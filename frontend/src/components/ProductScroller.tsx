@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ShoppingBag, Heart, Sparkles } from "lucide-react";
 import { Skeleton } from "./ui/skeleton";
 import { Badge } from "./ui/badge";
-import { formatPrice } from "../lib/utils";
+import { formatPrice, imageSrc } from "../lib/utils";
 import { useFavoritesStore } from "../stores/favoritesStore";
 import type { Product } from "../types";
 
@@ -45,7 +45,7 @@ function CompactCard({
       <div className="relative aspect-[4/5] rounded-2xl overflow-hidden bg-gradient-to-br from-muted/50 to-muted mb-2.5">
         {mainImage?.image ? (
           <img
-            src={mainImage.image}
+            src={imageSrc(mainImage)}
             alt={product.name}
             className={`w-full h-full object-cover transition-all duration-500 ${imageLoaded ? "opacity-100 blur-0 scale-100" : "opacity-0 blur-sm scale-105"}`}
             onLoad={() => setImageLoaded(true)}

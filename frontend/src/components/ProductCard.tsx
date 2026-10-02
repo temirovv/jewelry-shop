@@ -4,7 +4,7 @@ import { Heart, ShoppingBag, Sparkles } from "lucide-react";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Skeleton } from "./ui/skeleton";
-import { formatPrice } from "../lib/utils";
+import { formatPrice, imageSrc } from "../lib/utils";
 import { useFavoritesStore } from "../stores/favoritesStore";
 import type { Product } from "../types";
 
@@ -68,7 +68,7 @@ export const ProductCard = memo(function ProductCard({
           {/* Product Image */}
           {mainImage?.image ? (
             <img
-              src={mainImage.image}
+              src={imageSrc(mainImage)}
               alt={product.name}
               className={`w-full h-full object-cover transition-all duration-500 ${imageLoaded ? "opacity-100 blur-0 scale-100" : "opacity-0 blur-sm scale-105"}`}
               onLoad={() => setImageLoaded(true)}

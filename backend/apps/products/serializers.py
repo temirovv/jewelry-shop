@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Banner, Brand, Category, Product, ProductImage
+from .thumbnails import LARGE_WIDTH, THUMB_WIDTH, get_thumbnail_url
 
 
 class BannerSerializer(serializers.ModelSerializer):
@@ -35,18 +36,27 @@ class BrandSerializer(serializers.ModelSerializer):
 
 class ProductImageSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
+    thumbnail = serializers.SerializerMethodField()
+    large = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductImage
-        fields = ["id", "image", "is_main"]
+        fields = ["id", "image", "thumbnail", "large", "is_main"]
 
-    def get_image(self, obj):
-        if not obj.image:
+    def _absolute(self, url):
+        if not url:
             return None
         request = self.context.get("request")
-        if request:
-            return request.build_absolute_uri(obj.image.url)
-        return obj.image.url
+        return request.build_absolute_uri(url) if request else url
+
+    def get_image(self, obj):
+        return self._absolute(obj.image.url) if obj.image else None
+
+    def get_thumbnail(self, obj):
+        return self._absolute(get_thumbnail_url(obj.image, THUMB_WIDTH))
+
+    def get_large(self, obj):
+        return self._absolute(get_thumbnail_url(obj.image, LARGE_WIDTH))
 
 
 class ProductListSerializer(serializers.ModelSerializer):
