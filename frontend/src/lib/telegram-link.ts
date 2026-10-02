@@ -44,6 +44,11 @@ export function parseStartParam(param: string | undefined): string | null {
   }
 }
 
+// Telegram'ning "kimga yuborish" oynasi (chat tanlash) uchun havola
+export function telegramShareUrl(link: string, text: string): string {
+  return `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(text)}`;
+}
+
 export function telegramAppLink(path = "/"): string {
   const param = buildStartParam(path);
   const base = `https://t.me/${BOT_USERNAME}?startapp`;
