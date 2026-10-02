@@ -30,6 +30,7 @@ import { useTelegram } from "../hooks/useTelegram";
 import { toast } from "../stores/toastStore";
 import { getProduct, getProducts } from "../lib/api/products";
 import { formatPrice, productPath } from "../lib/utils";
+import { telegramAppLink, telegramShareUrl } from "../lib/telegram-link";
 import { staggerContainerVariants, staggerItemVariants } from "../lib/animations";
 import type { Product } from "../types";
 
@@ -44,7 +45,7 @@ export function ProductDetailPage() {
 
   const addItem = useCartStore((state) => state.addItem);
   const { toggleItem, isFavorite } = useFavoritesStore();
-  const { hapticFeedback, showBackButton, hideBackButton } = useTelegram();
+  const { hapticFeedback, showBackButton, hideBackButton, isTelegram, webApp } = useTelegram();
 
   const isInFavorites = product ? isFavorite(product.id) : false;
 
@@ -61,6 +62,13 @@ export function ProductDetailPage() {
       try {
         const data = await getProduct(slug);
         setProduct(data);
+        // Eski /product/<id> havolasidan kelinganda manzilni slug'ga almashtirish.
+        // navigate() emas — u route'ni qayta mount qilib, animatsiya va
+        // so'rovni takrorlardi; React Router holati (state) saqlanadi.
+        const canonical = productPath(data);
+        if (data.slug && window.location.pathname !== canonical) {
+          window.history.replaceState(window.history.state, "", canonical);
+        }
       } catch {
         setError("Mahsulot topilmadi");
       } finally {
@@ -102,12 +110,31 @@ export function ProductDetailPage() {
   const handleShare = async () => {
     if (!product) return;
     hapticFeedback?.impactOccurred?.("light");
+    // Havola URL satridan emas, mahsulotdan yasaladi: manzilda eski id yoki
+    // Telegram'ning #tgWebAppData (foydalanuvchi login ma'lumoti) bo'lishi
+    // mumkin. t.me havolasi do'konni darhol shu mahsulotda ochadi.
+    const link = telegramAppLink(productPath(product));
+    const text = `${product.name} — ${formatPrice(product.price)}`;
+
+    // Telegram ichida navigator.share ko'pincha yo'q (Android WebView) —
+    // Telegram'ning o'z chat tanlash oynasi ishonchliroq
+    if (isTelegram && webApp?.openTelegramLink) {
+      webApp.openTelegramLink(telegramShareUrl(link, text));
+      return;
+    }
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: product.name, text, url: link });
+      } catch (err) {
+        // Foydalanuvchi oynani yopdi — xato emas
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        toast.info("Ulashish imkonsiz");
+      }
+      return;
+    }
     try {
-      await navigator.share({
-        title: product.name,
-        text: `${product.name} - ${formatPrice(product.price)}`,
-        url: window.location.href,
-      });
+      await navigator.clipboard.writeText(link);
+      toast.success("Havola nusxalandi");
     } catch {
       toast.info("Ulashish imkonsiz");
     }
@@ -214,6 +241,7 @@ export function ProductDetailPage() {
         </button>
         <button
           onClick={handleShare}
+          aria-label="Ulashish"
           className="w-10 h-10 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center shadow-lg"
         >
           <Share2 className="w-5 h-5" />
